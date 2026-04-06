@@ -3,7 +3,35 @@ import SoundManager from './SoundManager';
 import { evaluateAlertState, getClearedAlerts, getNewAlerts } from './alertRules';
 
 const manager = new SoundManager();
-const NON_LOOPING_CAUTIONS = new Set(['ice_alarm', 'gear_unsafe', 'fuel_imbalance']);
+const NON_LOOPING_CAUTIONS = new Set(['ice_alarm', 'gear_unsafe', 'fuel_imbalance', 'throttle_asymmetry']);
+
+function routeCautionByCase(key) {
+  if (key === 'ice_alarm') {
+    manager.triggerIceAlert();
+    return;
+  }
+
+  if (key === 'gear_unsafe') {
+    // Play dedicated low-gear voice only for this specific condition.
+    manager.triggerGearUnsafeAlert();
+    return;
+  }
+
+  // Explicit case routing for current caution catalog.
+  // Each route can later get dedicated tones/voice files without changing alert logic.
+  switch (key) {
+    case 'egt_high':
+    case 'oil_pressure_low':
+    case 'engine_degraded':
+    case 'fuel_imbalance':
+    case 'throttle_asymmetry':
+    case 'electrical_bus_low':
+      manager.triggerCaution(key);
+      return;
+    default:
+      manager.triggerCaution(key);
+  }
+}
 
 export function useCockpitAudio({
   enabled,
@@ -72,18 +100,7 @@ export function useCockpitAudio({
     transitions.newWarnings.forEach((key) => manager.triggerWarning(key));
     if (transitions.newWarnings.length === 0) {
       transitions.newCautions.forEach((key) => {
-        if (key === 'ice_alarm') {
-          manager.triggerIceAlert();
-          return;
-        }
-
-        if (key === 'gear_unsafe') {
-          // Play dedicated low-gear voice only for this specific condition.
-          manager.triggerGearUnsafeAlert();
-          return;
-        }
-
-        manager.triggerCaution(key);
+        routeCautionByCase(key);
       });
     }
 

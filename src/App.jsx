@@ -45,7 +45,7 @@ export default function App() {
   const [bleedAir, setBleedAir] = useState(true);
   const [faultEngine, setFaultEngine] = useState(3);
   const [faultEnabled, setFaultEnabled] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const [masterVolume, setMasterVolume] = useState(55);
   const [alertVolume, setAlertVolume] = useState(68);
   const [acknowledgeToken, setAcknowledgeToken] = useState(0);
