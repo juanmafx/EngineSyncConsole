@@ -38,11 +38,54 @@ Multi-Engine Console is a React-based central avionics simulation console for en
 - Telemetry tab with live trend chart for vertical speed.
 - Built with React + Vite and organized in modular tabs: Engines, Gear, Flight Commands, Fuel Emulation, Autopilot, Telemetry.
 
+## Engine Model Basis
+
+The simulation is based on the **Pratt & Whitney TF33 / JT3D family** (classic low-bypass turbofan behavior), adapted for an 8-engine long-range aircraft console model.
+
+- Engine type: low-bypass turbofan
+- Reference thrust: ~`17,000 lbf` per engine (max)
+- Reference airflow: ~`450 lb/sec` per engine
+- Bypass ratio basis: ~`1.4`
+
+### Core Operating Ranges Used
+
+- **N1 (low-pressure spool):**
+  - Idle: ~`30-35%`
+  - Cruise: ~`70-85%`
+  - High power/takeoff band: ~`95-100%`
+- **N2 (high-pressure spool):**
+  - Idle: ~`60%`
+  - Cruise: ~`85-95%`
+  - High power/takeoff band: ~`100%`
+- **RPM basis:**
+  - N1: ~`8,000-9,000 rpm`
+  - N2: ~`10,000-11,500 rpm`
+
+### Fuel and Temperature Basis
+
+- TSFC basis: ~`0.74-0.78 lb/(lbf*hr)` (modeled around `0.76`)
+- Fuel flow (per engine):
+  - Cruise band: ~`3,000-5,000 lb/hr`
+  - Max power band: up to ~`12,000+ lb/hr`
+- Full aircraft (8 engines):
+  - Cruise total: ~`25,000-40,000 lb/hr`
+  - High power total: ~`96,000-104,000 lb/hr` envelope
+- EGT basis:
+  - Idle: ~`300-400 C`
+  - Cruise: ~`500-650 C`
+  - High power limit band: ~`700-800 C`
+
+### Dynamics and Realism Assumptions
+
+- Legacy turbofan spool response is intentionally **slower** than modern engines (inertia/lag).
+- Fuel burn increases non-linearly with high spool/thrust demand.
+- Thrust/fuel/temperature are coupled with legacy-engine style trends for training visualization.
+
 ## Alert and Control Logic
 
-- `MASTER WARNING` trigger: any engine EGT above `680 C`.
+- `MASTER WARNING` trigger: any engine EGT above `760 C`.
 - `MASTER CAUTION` trigger: active when one or more caution conditions are present.
-- `EGT HIGH` caution: any engine EGT above `650 C`.
+- `EGT HIGH` caution: any engine EGT above `700 C`.
 - `LOW OIL PRESS` caution: any engine oil pressure below `35 psi`.
 - `FUEL IMBALANCE` caution: left/right throttle symmetry delta above `2.2%`.
 - `ELEC BUS LOW` caution: electrical bus A or B below `25 V`.
@@ -51,7 +94,7 @@ Multi-Engine Console is a React-based central avionics simulation console for en
 - `GEAR UNSAFE` caution: gear lever is down, gear is not locked, and gear is not in transit.
 - Gear transit behavior: when gear is toggled, lock state updates after a short transition delay.
 - Defrost behavior: `Ice Defrost`/anti-ice can be toggled on or off; when off, airframe ice caution remains active.
-- Overpower/over-temp behavior: high EGT values move from caution (`>650 C`) to warning (`>680 C`).
+- Overpower/over-temp behavior: high EGT values move from caution (`>700 C`) to warning (`>760 C`).
 - Oil trend behavior: per-engine temperature trend is shown in `C/s`; abnormal trend magnitude (`|trend| > 7`) contributes to caution count.
 
 ## Autopilot and Engine Power
@@ -117,6 +160,13 @@ Multi-Engine Console is a React-based central avionics simulation console for en
 ![Telemetry Tab](docs/screenshots/telemetry-tab.png)
 ![Telemetry Fuel Session](docs/screenshots/telemetry-fuel-session.png)
 ![Telemetry Fuel Session (Low Burn)](docs/screenshots/telemetry-fuel-session-lowburn.png)
+
+## Alarm Cases
+
+Alarm cases look like this when warnings/cautions are active:
+
+![Alarm Panel (Pinned)](docs/screenshots/alarm-panel-pinned.png)
+![Alarm Case at High Engine Power](docs/screenshots/alarm-high-power-engines.png)
 
 ## Run
 
