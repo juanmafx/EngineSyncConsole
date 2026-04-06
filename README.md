@@ -1,6 +1,8 @@
 # EngineSyncConsole
 Multi-Engine Console is a React-based central avionics simulation console for engine controls, flight navigation, alarm management, and cabin activity monitoring. It enables users to analyze aircraft behavior, trigger and test sound alarms, and simulate engine and onboard system responses in a controlled environment.
 
+EngineSyncConsole is a browser-based avionics/systems console inspired by TF33-class multi-engine aircraft behavior. It is designed for visualization, training logic, and systems interaction rather than exact certified engine replication.
+
 ## Features
 
 - 8-engine simulation model with independent throttle controls (E1-E8).
