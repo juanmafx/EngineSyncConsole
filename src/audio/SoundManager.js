@@ -33,6 +33,12 @@ export default class SoundManager {
 
     this.currentAmbient = 0;
     this.targetAmbient = 0;
+    this.ambientProfile = {
+      averagePower: 0,
+      weightedEnginePower: 0,
+      activeEngineRatio: 0,
+      activeEngineCount: 0,
+    };
     this.ambientTicker = null;
 
     this.loopPriority = 0;
@@ -127,7 +133,7 @@ export default class SoundManager {
 
     if (!enabled) {
       this.stopAlertLoop();
-      this.setAmbientIntensity(0);
+      this.setAmbientProfile(0);
     }
   }
 
@@ -154,9 +160,30 @@ export default class SoundManager {
     this.logEvent('sound_play', { type: 'ui_click' });
   }
 
-  setAmbientIntensity(intensity) {
+  setAmbientProfile(profile) {
     // Ambient is smoothed in a short ticker so throttle moves do not pop.
-    this.targetAmbient = clamp01(intensity);
+    if (typeof profile === 'number') {
+      this.targetAmbient = clamp01(profile);
+      this.ambientProfile = {
+        averagePower: this.targetAmbient,
+        weightedEnginePower: this.targetAmbient,
+        activeEngineRatio: this.targetAmbient > 0.01 ? 1 : 0,
+        activeEngineCount: this.targetAmbient > 0.01 ? 8 : 0,
+      };
+    } else {
+      const averagePower = clamp01(profile?.averagePower ?? 0);
+      const weightedEnginePower = clamp01(profile?.weightedEnginePower ?? averagePower);
+      const activeEngineRatio = clamp01(profile?.activeEngineRatio ?? 0);
+      const intensity = clamp01(weightedEnginePower * (0.35 + 0.65 * activeEngineRatio));
+
+      this.targetAmbient = intensity;
+      this.ambientProfile = {
+        averagePower,
+        weightedEnginePower,
+        activeEngineRatio,
+        activeEngineCount: Math.max(0, Math.min(8, Number(profile?.activeEngineCount ?? Math.round(activeEngineRatio * 8)))),
+      };
+    }
 
     if (!this.enabled) {
       this.targetAmbient = 0;
@@ -181,12 +208,19 @@ export default class SoundManager {
       this.startAmbientLoops();
     }
 
+    const innerBase = 0.16 + this.ambientProfile.activeEngineRatio * 0.18;
+    const outerBase = 0.07 + this.ambientProfile.activeEngineRatio * 0.1;
+    const innerRate = 0.84 + this.ambientProfile.averagePower * 0.32;
+    const outerRate = 0.8 + this.ambientProfile.averagePower * 0.24;
+
     if (canPlay(this.engineInner)) {
-      this.engineInner.volume(this.currentAmbient * 0.22);
+      this.engineInner.volume(this.currentAmbient * innerBase);
+      this.engineInner.rate(innerRate);
     }
 
     if (canPlay(this.engineOuter)) {
-      this.engineOuter.volume(this.currentAmbient * 0.11);
+      this.engineOuter.volume(this.currentAmbient * outerBase);
+      this.engineOuter.rate(outerRate);
     }
 
     if (!active && this.targetAmbient <= 0.01) {
@@ -370,7 +404,7 @@ export default class SoundManager {
 
   stopAll() {
     this.stopAlertLoop();
-    this.setAmbientIntensity(0);
+    this.setAmbientProfile(0);
 
     if (canPlay(this.engineInner)) {
       this.engineInner.stop();

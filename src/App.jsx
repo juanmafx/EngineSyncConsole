@@ -158,6 +158,9 @@ export default function App() {
   }, [autopilotOn, speedHold, targetAirspeedKt, metrics.airspeedKt, metrics.verticalSpeedFpm]);
 
   const averagePower = throttles.reduce((sum, value) => sum + value, 0) / (ENGINE_COUNT * 100);
+  const activeEngineCount = throttles.filter((value) => value > 8).length;
+  const activeEngineRatio = activeEngineCount / ENGINE_COUNT;
+  const weightedEnginePower = throttles.reduce((sum, value) => sum + (value > 8 ? value : 0), 0) / (ENGINE_COUNT * 100);
   const allGearLocked = gearLocked.nose && gearLocked.left && gearLocked.right;
   const gearUnsafe = gearDown && !allGearLocked;
 
@@ -165,7 +168,12 @@ export default function App() {
     enabled: audioEnabled,
     masterVolume: masterVolume / 100,
     alertVolume: alertVolume / 100,
-    ambientIntensity: averagePower,
+    ambientProfile: {
+      averagePower,
+      weightedEnginePower,
+      activeEngineCount,
+      activeEngineRatio,
+    },
     acknowledgeToken,
     simState: {
       egt: metrics.egt,

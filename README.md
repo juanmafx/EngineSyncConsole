@@ -73,6 +73,19 @@ Multi-Engine Console is a React-based central avionics simulation console for en
   - Includes smoothing/integrator behavior to avoid abrupt throttle jumps.
   - Manual throttle movement temporarily overrides autothrottle for `5 seconds`, then auto-control resumes.
 
+## Cockpit Sound Model
+
+- Engine ambience uses original cockpit-style engine audio assets from:
+  - `/public/sounds/engine/engn1_inn.wav` (inside character)
+  - `/public/sounds/engine/engn1_out.wav` (outside character)
+- Audio loudness is dynamically driven by:
+  - Number of active engines (an engine is treated as active above `8%` throttle).
+  - Overall engine power level (weighted average throttle).
+- As more engines are active and power increases, cockpit ambience becomes stronger.
+- As engines reduce power or drop below active threshold, ambience softens accordingly.
+- Playback rate is also adjusted with average power, so higher power sounds more intense.
+- Ambient transitions are smoothed to avoid abrupt clicks/pops while moving throttles.
+
 ## Screenshots
 
 ### Main Overview

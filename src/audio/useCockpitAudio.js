@@ -9,7 +9,7 @@ export function useCockpitAudio({
   enabled,
   masterVolume,
   alertVolume,
-  ambientIntensity,
+  ambientProfile,
   simState,
   acknowledgeToken,
 }) {
@@ -48,8 +48,8 @@ export function useCockpitAudio({
   }, [alertVolume]);
 
   useEffect(() => {
-    manager.setAmbientIntensity(ambientIntensity);
-  }, [ambientIntensity]);
+    manager.setAmbientProfile(ambientProfile);
+  }, [ambientProfile]);
 
   useEffect(() => {
     const prev = prevAlertsRef.current;
