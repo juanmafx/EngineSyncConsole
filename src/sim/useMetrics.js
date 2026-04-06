@@ -35,11 +35,11 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
     const busA = clamp(26.5 + (boost ? 0.8 : -0.7), 22, 29);
     const busB = clamp(26.1 + (boost ? 0.7 : -0.9), 22, 29);
 
-    const generatorOnline = sim.rpm.map((v) => v > 5000);
+    const generatorOnline = sim.n2Rpm.map((v) => v > 7000);
     const iceAlarmActive = !antiIce;
-    const hasMasterWarning = sim.egt.some((v) => v > 680);
+    const hasMasterWarning = sim.egt.some((v) => v > 760);
     const cautionCount = [
-      ...sim.egt.map((v) => v > 650),
+      ...sim.egt.map((v) => v > 700),
       ...sim.oilPressure.map((v) => v < 34),
       ...sim.oilTemp.map((v) => v > 123),
       ...sim.trendRates.map((v) => Math.abs(v) > 7),
@@ -53,6 +53,10 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
 
     return {
       epr: sim.epr,
+      n1Pct: sim.n1Pct,
+      n2Pct: sim.n2Pct,
+      n1Rpm: sim.n1Rpm,
+      n2Rpm: sim.n2Rpm,
       rpm: sim.rpm,
       egt: sim.egt,
       oilPressure: sim.oilPressure,

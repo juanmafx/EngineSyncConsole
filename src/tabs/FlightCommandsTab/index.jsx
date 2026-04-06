@@ -65,7 +65,7 @@ export function FlightCommandsTab({
         </div>
         <div className="annunciator-grid">
           <StatusPill label="LOW OIL PRESS" on={metrics.oilPressure.some((v) => v < 35)} tone="warn" />
-          <StatusPill label="EGT HIGH" on={metrics.egt.some((v) => v > 650)} tone="danger" />
+          <StatusPill label="EGT HIGH" on={metrics.egt.some((v) => v > 700)} tone="danger" />
           <StatusPill label="FUEL IMBALANCE" on={metrics.symmetryDelta > 2.2} tone="warn" />
           <StatusPill label="ELEC BUS LOW" on={metrics.busA < 25 || metrics.busB < 25} tone="warn" />
           <StatusPill label="AIRFRAME ICE" on={metrics.iceAlarmActive} tone="warn" />

@@ -5,11 +5,11 @@ export function evaluateAlertState(simState) {
   const warnings = new Set();
   const cautions = new Set();
 
-  if (simState.egt.some((v) => v > 680)) {
+  if (simState.egt.some((v) => v > 760)) {
     warnings.add('egt_critical');
   }
 
-  if (simState.egt.some((v) => v > 650)) {
+  if (simState.egt.some((v) => v > 700)) {
     cautions.add('egt_high');
   }
 

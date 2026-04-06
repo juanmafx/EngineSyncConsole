@@ -28,20 +28,30 @@ export function useSimulationLoop({
         const targets = getTargets({ throttles, targetEpr, antiIce, boost });
         const faultedTargets = {
           epr: [...targets.epr],
+          n1Pct: [...targets.n1Pct],
+          n2Pct: [...targets.n2Pct],
+          n1Rpm: [...targets.n1Rpm],
+          n2Rpm: [...targets.n2Rpm],
           rpm: [...targets.rpm],
           egt: [...targets.egt],
           oilPressure: [...targets.oilPressure],
           oilTemp: [...targets.oilTemp],
           fuelFlow: [...targets.fuelFlow],
+          thrustLbf: [...targets.thrustLbf],
         };
 
         if (faultEnabled) {
-          faultedTargets.epr[faultEngine] -= 0.18;
-          faultedTargets.rpm[faultEngine] -= 700;
-          faultedTargets.egt[faultEngine] += 48;
-          faultedTargets.oilPressure[faultEngine] -= 8;
-          faultedTargets.oilTemp[faultEngine] += 10;
-          faultedTargets.fuelFlow[faultEngine] += 240;
+          faultedTargets.epr[faultEngine] -= 0.2;
+          faultedTargets.n1Pct[faultEngine] -= 7;
+          faultedTargets.n2Pct[faultEngine] -= 6;
+          faultedTargets.n1Rpm[faultEngine] -= 620;
+          faultedTargets.n2Rpm[faultEngine] -= 720;
+          faultedTargets.rpm[faultEngine] -= 720;
+          faultedTargets.egt[faultEngine] += 54;
+          faultedTargets.oilPressure[faultEngine] -= 9;
+          faultedTargets.oilTemp[faultEngine] += 9;
+          faultedTargets.fuelFlow[faultEngine] += 380;
+          faultedTargets.thrustLbf[faultEngine] *= 0.86;
         }
 
         const blend = (current, target, gain) => current + (target - current) * gain;
@@ -54,12 +64,17 @@ export function useSimulationLoop({
           return Math.max(0.04, baseGain * 0.38);
         };
 
-        const rpm = prev.rpm.map((v, i) => blend(v, faultedTargets.rpm[i], gainFor(0.28, i)));
-        const epr = prev.epr.map((v, i) => blend(v, faultedTargets.epr[i], gainFor(0.2, i)));
-        const egt = prev.egt.map((v, i) => blend(v, faultedTargets.egt[i], gainFor(0.11, i)));
-        const oilPressure = prev.oilPressure.map((v, i) => blend(v, faultedTargets.oilPressure[i], gainFor(0.22, i)));
-        const oilTemp = prev.oilTemp.map((v, i) => blend(v, faultedTargets.oilTemp[i], gainFor(0.06, i)));
-        const fuelFlow = prev.fuelFlow.map((v, i) => blend(v, faultedTargets.fuelFlow[i], gainFor(0.24, i)));
+        const n1Pct = prev.n1Pct.map((v, i) => blend(v, faultedTargets.n1Pct[i], gainFor(0.08, i)));
+        const n2Pct = prev.n2Pct.map((v, i) => blend(v, faultedTargets.n2Pct[i], gainFor(0.09, i)));
+        const n1Rpm = prev.n1Rpm.map((v, i) => blend(v, faultedTargets.n1Rpm[i], gainFor(0.08, i)));
+        const n2Rpm = prev.n2Rpm.map((v, i) => blend(v, faultedTargets.n2Rpm[i], gainFor(0.09, i)));
+        const rpm = n2Rpm;
+        const epr = prev.epr.map((v, i) => blend(v, faultedTargets.epr[i], gainFor(0.075, i)));
+        const egt = prev.egt.map((v, i) => blend(v, faultedTargets.egt[i], gainFor(0.05, i)));
+        const oilPressure = prev.oilPressure.map((v, i) => blend(v, faultedTargets.oilPressure[i], gainFor(0.11, i)));
+        const oilTemp = prev.oilTemp.map((v, i) => blend(v, faultedTargets.oilTemp[i], gainFor(0.05, i)));
+        const fuelFlow = prev.fuelFlow.map((v, i) => blend(v, faultedTargets.fuelFlow[i], gainFor(0.09, i)));
+        const thrustLbf = prev.thrustLbf.map((v, i) => blend(v, faultedTargets.thrustLbf[i], gainFor(0.085, i)));
 
         const trendRates = egt.map((v, i) => (v - prev.egt[i]) / TICK_SECONDS);
 
@@ -139,12 +154,17 @@ export function useSimulationLoop({
 
         return {
           epr,
+          n1Pct,
+          n2Pct,
+          n1Rpm,
+          n2Rpm,
           rpm,
           egt,
           oilPressure,
           oilTemp,
           trendRates,
           fuelFlow,
+          thrustLbf,
           tankQty: nextTankQty,
           elapsedSeconds: prev.elapsedSeconds + TICK_SECONDS,
           distanceNm,

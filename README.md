@@ -115,6 +115,8 @@ Multi-Engine Console is a React-based central avionics simulation console for en
 ### Telemetry
 
 ![Telemetry Tab](docs/screenshots/telemetry-tab.png)
+![Telemetry Fuel Session](docs/screenshots/telemetry-fuel-session.png)
+![Telemetry Fuel Session (Low Burn)](docs/screenshots/telemetry-fuel-session-lowburn.png)
 
 ## Run
 

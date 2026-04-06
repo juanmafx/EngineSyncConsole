@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Module } from '../../components/cockpit';
+import { ENGINE_COUNT } from '../../sim/constants';
 import { AIRCRAFT_LIMITS } from '../../sim/constants';
 
 function buildLinePoints(values, minY, maxY, width, height) {
@@ -47,12 +48,20 @@ function TrendChart({ title, unit, values, min, max, colorClass }) {
 }
 
 export function TelemetryTab({ telemetryHistory = [], metrics }) {
+  const [selectedEngineIdx, setSelectedEngineIdx] = useState(0);
   const speedSeries = telemetryHistory.map((p) => p.airspeedKt);
   const speedCapSeries = telemetryHistory.map((p) => p.throttleCapabilityKt);
   const fullCapSeries = telemetryHistory.map((p) => p.fullThrottleCapabilityKt);
   const thrustMarginSeries = telemetryHistory.map((p) => p.thrustMarginLbf);
   const altitudeSeries = telemetryHistory.map((p) => p.altitudeFt);
   const vsSeries = telemetryHistory.map((p) => p.verticalSpeedFpm);
+  const totalFuelFlowSeries = telemetryHistory.map((p) => p.totalFuelFlow ?? 0);
+  const fuelUsedSeries = telemetryHistory.map((p) => p.fuelUsedLb ?? 0);
+  const selectedEgtSeries = telemetryHistory.map((p) => p.egt?.[selectedEngineIdx] ?? 0);
+  const selectedRpmSeries = telemetryHistory.map((p) => p.rpm?.[selectedEngineIdx] ?? 0);
+  const selectedFuelFlowSeries = telemetryHistory.map((p) => p.fuelFlowPerEngine?.[selectedEngineIdx] ?? 0);
+  const fuelUsedMax = Math.max(1000, ...fuelUsedSeries, metrics.fuelUsedLb * 1.08);
+  const totalFuelFlowMax = Math.max(16000, ...totalFuelFlowSeries, metrics.totalFuelFlow * 1.1);
 
   return (
     <div className="gauge-grid">
@@ -91,7 +100,42 @@ export function TelemetryTab({ telemetryHistory = [], metrics }) {
           <strong className={metrics.telemetry.thrustMarginLbf < 0 ? 'warn-text' : ''}>{metrics.telemetry.thrustMarginLbf.toFixed(0)} lbf</strong>
         </div>
       </Module>
+
+      <Module title="Telemetry - Fuel Consumption Session" colorClass="red">
+        <TrendChart title="Total Fuel Flow" unit="lb/hr" values={totalFuelFlowSeries} min={0} max={totalFuelFlowMax} colorClass="warn" />
+        <TrendChart title="Fuel Used (Session Total)" unit="lb" values={fuelUsedSeries} min={0} max={fuelUsedMax} colorClass="danger" />
+        <div className="summary-row">
+          <span>Current Flow / Fuel Used</span>
+          <strong>
+            {metrics.totalFuelFlow.toFixed(0)} lb/hr / {metrics.fuelUsedLb.toFixed(0)} lb
+          </strong>
+        </div>
+      </Module>
+
+      <Module title="Telemetry - Per Engine Session" colorClass="yellow">
+        <div className="summary-row">
+          <span>Engine Selector</span>
+          <label className="telemetry-engine-select">
+            <select value={selectedEngineIdx} onChange={(e) => setSelectedEngineIdx(Number(e.target.value))}>
+              {Array.from({ length: ENGINE_COUNT }, (_, i) => (
+                <option key={`telemetry-engine-${i}`} value={i}>
+                  Engine {i + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <TrendChart title={`Engine ${selectedEngineIdx + 1} EGT`} unit="C" values={selectedEgtSeries} min={300} max={760} colorClass="danger" />
+        <TrendChart title={`Engine ${selectedEngineIdx + 1} N2 RPM`} unit="rpm" values={selectedRpmSeries} min={6000} max={11500} colorClass="amber" />
+        <TrendChart
+          title={`Engine ${selectedEngineIdx + 1} Fuel Flow`}
+          unit="lb/hr"
+          values={selectedFuelFlowSeries}
+          min={1000}
+          max={5600}
+          colorClass="teal"
+        />
+      </Module>
     </div>
   );
 }
-

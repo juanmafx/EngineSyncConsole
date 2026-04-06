@@ -56,10 +56,24 @@ export function EnginesTab({
           getTone={(v) => (v > 2.24 ? 'danger' : v > 2.16 ? 'warn' : '')}
         />
         <DataRow
-          label="RPM"
-          values={metrics.rpm}
+          label="N1"
+          values={metrics.n1Pct}
+          unit="%"
+          precision={1}
+          getTone={(v) => (v > 99 ? 'danger' : v > 95 ? 'warn' : '')}
+        />
+        <DataRow
+          label="N2"
+          values={metrics.n2Pct}
+          unit="%"
+          precision={1}
+          getTone={(v) => (v > 99 ? 'danger' : v > 95 ? 'warn' : '')}
+        />
+        <DataRow
+          label="N2 RPM"
+          values={metrics.n2Rpm}
           unit="rpm"
-          getTone={(v) => (v > 6250 ? 'danger' : v > 5980 ? 'warn' : '')}
+          getTone={(v) => (v > 11150 ? 'danger' : v > 10800 ? 'warn' : '')}
         />
         <div className="symmetry-wrap">
           <span>Throttle Symmetry Delta</span>
@@ -87,7 +101,7 @@ export function EnginesTab({
       </Module>
 
       <Module title="Module B - Engine Condition" colorClass="blue">
-        <DataRow label="EGT" values={metrics.egt} unit="C" getTone={(v) => (v > 660 ? 'danger' : v > 630 ? 'warn' : '')} />
+        <DataRow label="EGT" values={metrics.egt} unit="C" getTone={(v) => (v > 760 ? 'danger' : v > 700 ? 'warn' : '')} />
         <DataRow
           label="Oil Pressure"
           values={metrics.oilPressure}

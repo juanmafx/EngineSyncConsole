@@ -114,6 +114,15 @@ export default function App() {
           thrustMarginLbf: metrics.telemetry.thrustMarginLbf,
           altitudeFt: metrics.altitudeFt,
           verticalSpeedFpm: metrics.verticalSpeedFpm,
+          totalFuelFlow: metrics.totalFuelFlow,
+          fuelUsedLb: metrics.fuelUsedLb,
+          enduranceHours: metrics.enduranceHours,
+          rangeNm: metrics.rangeNm,
+          egt: [...metrics.egt],
+          rpm: [...metrics.rpm],
+          fuelFlowPerEngine: [...metrics.fuelFlowPerEngine],
+          avgThrottlePct: throttles.reduce((sum, value) => sum + value, 0) / ENGINE_COUNT,
+          enginesAtMaxCount: throttles.filter((value) => value >= 99).length,
         },
       ];
       return next.length > 360 ? next.slice(next.length - 360) : next;
@@ -125,6 +134,14 @@ export default function App() {
     metrics.telemetry.thrustMarginLbf,
     metrics.altitudeFt,
     metrics.verticalSpeedFpm,
+    metrics.totalFuelFlow,
+    metrics.fuelUsedLb,
+    metrics.enduranceHours,
+    metrics.rangeNm,
+    metrics.egt,
+    metrics.rpm,
+    metrics.fuelFlowPerEngine,
+    throttles,
   ]);
 
   const setThrottleAt = (idx, value) => {
@@ -302,6 +319,7 @@ export default function App() {
       {activeTab === 'fuel' && (
         <FuelEmulationTab
           metrics={metrics}
+          telemetryHistory={telemetryHistory}
           crossfeed={crossfeed}
           setCrossfeed={setCrossfeed}
           boost={boost}

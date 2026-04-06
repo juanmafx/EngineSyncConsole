@@ -510,12 +510,22 @@ h1 {
 .telemetry-chart.warn polyline { stroke: #daa155; }
 .telemetry-chart.amber polyline { stroke: #e4be5c; }
 .telemetry-chart.danger polyline { stroke: #db6b72; }
+.telemetry-chart.fuel-correlation-chart polyline { stroke: #e77c7e; }
 
 .telemetry-chart-foot {
   display: flex;
   justify-content: space-between;
   color: #9aabba;
   font-size: 0.72rem;
+}
+
+.telemetry-engine-select select {
+  background: #182430;
+  color: #e7edf4;
+  border: 1px solid #55687c;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: inherit;
 }
 
 .switch-row {
