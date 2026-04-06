@@ -80,6 +80,65 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.annunciator-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.pill-button {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.alerts-panel {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 14, 20, 0.82);
+}
+
+.alerts-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.7rem;
+  color: #c9d5e1;
+}
+
+.alerts-empty {
+  font-size: 0.84rem;
+  color: #aeb9c5;
+  padding: 4px 0;
+}
+
+.alert-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 6px 9px;
+  font-size: 0.83rem;
+}
+
+.alert-row.warning {
+  border-color: rgba(211, 86, 89, 0.8);
+  background: rgba(195, 72, 74, 0.2);
+}
+
+.alert-row.caution {
+  border-color: rgba(211, 157, 77, 0.8);
+  background: rgba(201, 143, 51, 0.17);
+}
+
 .audio-panel {
   display: grid;
   gap: 10px;

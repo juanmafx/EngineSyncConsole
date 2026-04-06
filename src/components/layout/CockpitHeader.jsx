@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusPill, ToggleButton } from '../cockpit';
 
 export function CockpitHeader({
   metrics,
+  activeAlerts,
   antiIce,
   bleedAir,
   audioEnabled,
@@ -13,6 +14,10 @@ export function CockpitHeader({
   alertVolume,
   onAlertVolumeChange,
 }) {
+  const [alertsPinned, setAlertsPinned] = useState(false);
+  const [alertsHover, setAlertsHover] = useState(false);
+  const alertsOpen = alertsPinned || alertsHover;
+
   return (
     <header className="hero">
       <div className="hero-main">
@@ -24,14 +29,41 @@ export function CockpitHeader({
         </p>
       </div>
       <div className="hero-side">
-        <div className="annunciator-strip">
-          <StatusPill label={`CAUTIONS ${metrics.cautionCount}`} on={metrics.cautionCount > 0} tone="warn" />
+        <div
+          className="annunciator-wrap"
+          onMouseEnter={() => setAlertsHover(true)}
+          onMouseLeave={() => setAlertsHover(false)}
+        >
+          <div className="annunciator-strip">
+            <button
+              type="button"
+              className={`pill pill-button ${metrics.cautionCount > 0 ? 'warn' : 'off'}`}
+              onClick={() => setAlertsPinned((value) => !value)}
+            >
+              {`CAUTIONS ${metrics.cautionCount}`}
+            </button>
           <StatusPill label="MASTER CAUTION" on={metrics.hasMasterCaution} tone="warn" />
           <StatusPill label="MASTER WARNING" on={metrics.hasMasterWarning} tone="danger" />
           <StatusPill label="ICE ALARM" on={metrics.iceAlarmActive} tone="warn" />
           <StatusPill label="ANTI-ICE" on={antiIce} />
           <StatusPill label="ICE DEFROST" on={antiIce} />
           <StatusPill label="BLEED AIR" on={bleedAir} />
+          </div>
+          {alertsOpen && (
+            <div className="alerts-panel">
+              <div className="alerts-panel-head">
+                <span>Active Alarms</span>
+                <small>{alertsPinned ? 'Pinned' : 'Hover'}</small>
+              </div>
+              {activeAlerts.length === 0 && <div className="alerts-empty">No active warnings or cautions.</div>}
+              {activeAlerts.map((alert) => (
+                <div key={alert.key} className={`alert-row ${alert.level}`}>
+                  <span>{alert.label}</span>
+                  <strong>{alert.level === 'warning' ? 'WARNING' : 'CAUTION'}</strong>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="audio-panel">
           <div className="audio-panel-header">Cockpit Audio</div>

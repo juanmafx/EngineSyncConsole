@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { evaluateAlertState } from './audio/alertRules';
 import { useCockpitAudio } from './audio/useCockpitAudio';
 import { CockpitHeader } from './components/layout/CockpitHeader';
 import { TabStrip } from './components/layout/TabStrip';
@@ -22,6 +23,16 @@ function formatDuration(hoursFloat) {
 
 const AUTOTHROTTLE_OVERRIDE_MS = 5000;
 const AUTOTHROTTLE_SLEW_PER_TICK = 1.6;
+const ALERT_LABELS = {
+  egt_critical: 'EGT Critical',
+  egt_high: 'EGT High',
+  oil_pressure_low: 'Low Oil Pressure',
+  engine_degraded: 'Engine Degraded',
+  fuel_imbalance: 'Fuel Imbalance',
+  electrical_bus_low: 'Electrical Bus Low',
+  ice_alarm: 'Airframe Ice',
+  gear_unsafe: 'Gear Unsafe',
+};
 
 export default function App() {
   const [throttles, setThrottles] = useState([63, 65, 62, 64, 63, 66, 61, 64]);
@@ -158,11 +169,38 @@ export default function App() {
   }, [autopilotOn, speedHold, targetAirspeedKt, metrics.airspeedKt, metrics.verticalSpeedFpm]);
 
   const averagePower = throttles.reduce((sum, value) => sum + value, 0) / (ENGINE_COUNT * 100);
+  const leftBankPower = throttles.slice(0, 4).reduce((sum, value) => sum + value, 0) / (4 * 100);
+  const rightBankPower = throttles.slice(4).reduce((sum, value) => sum + value, 0) / (4 * 100);
   const activeEngineCount = throttles.filter((value) => value > 8).length;
   const activeEngineRatio = activeEngineCount / ENGINE_COUNT;
   const weightedEnginePower = throttles.reduce((sum, value) => sum + (value > 8 ? value : 0), 0) / (ENGINE_COUNT * 100);
   const allGearLocked = gearLocked.nose && gearLocked.left && gearLocked.right;
   const gearUnsafe = gearDown && !allGearLocked;
+  const simState = {
+    egt: metrics.egt,
+    oilPressure: metrics.oilPressure,
+    symmetryDelta: metrics.symmetryDelta,
+    busA: metrics.busA,
+    busB: metrics.busB,
+    faultEnabled,
+    iceAlarmActive: metrics.iceAlarmActive,
+    gearDown,
+    gearUnsafe,
+    gearTransit,
+  };
+  const alertSnapshot = evaluateAlertState(simState);
+  const activeAlerts = [
+    ...[...alertSnapshot.warnings].map((key) => ({
+      key,
+      level: 'warning',
+      label: ALERT_LABELS[key] ?? key,
+    })),
+    ...[...alertSnapshot.cautions].map((key) => ({
+      key,
+      level: 'caution',
+      label: key === 'engine_degraded' ? `Engine ${faultEngine + 1} Degraded` : ALERT_LABELS[key] ?? key,
+    })),
+  ];
 
   const { playUiClick } = useCockpitAudio({
     enabled: audioEnabled,
@@ -173,20 +211,11 @@ export default function App() {
       weightedEnginePower,
       activeEngineCount,
       activeEngineRatio,
+      leftBankPower,
+      rightBankPower,
     },
     acknowledgeToken,
-    simState: {
-      egt: metrics.egt,
-      oilPressure: metrics.oilPressure,
-      symmetryDelta: metrics.symmetryDelta,
-      busA: metrics.busA,
-      busB: metrics.busB,
-      faultEnabled,
-      iceAlarmActive: metrics.iceAlarmActive,
-      gearDown,
-      gearUnsafe,
-      gearTransit,
-    },
+    simState,
   });
 
   const toggleWithClick = (setter) => {
@@ -198,6 +227,7 @@ export default function App() {
     <div className="page">
       <CockpitHeader
         metrics={metrics}
+        activeAlerts={activeAlerts}
         antiIce={antiIce}
         bleedAir={bleedAir}
         audioEnabled={audioEnabled}

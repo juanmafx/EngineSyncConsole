@@ -38,6 +38,8 @@ export default class SoundManager {
       weightedEnginePower: 0,
       activeEngineRatio: 0,
       activeEngineCount: 0,
+      leftBankPower: 0,
+      rightBankPower: 0,
     };
     this.ambientTicker = null;
 
@@ -47,8 +49,7 @@ export default class SoundManager {
 
     this.cooldowns = new Map();
 
-    this.engineInner = null;
-    this.engineOuter = null;
+    this.ambientLayers = [];
     this.warningTone = null;
     this.cautionTone = null;
     this.iceTone = null;
@@ -61,25 +62,34 @@ export default class SoundManager {
       return;
     }
 
-    this.engineInner = safeHowl({
-      src: ['/sounds/engine/engn1_inn.wav'],
-      loop: true,
-      volume: 0,
-      pool: 12,
-    });
+    const ambientSpecs = [
+      { engine: 1, weight: 1.0, side: 'center', rateOffset: -0.02 },
+      { engine: 2, weight: 0.92, side: 'left', rateOffset: 0.0 },
+      { engine: 3, weight: 0.86, side: 'right', rateOffset: 0.02 },
+      { engine: 5, weight: 0.79, side: 'left', rateOffset: -0.01 },
+      { engine: 7, weight: 0.74, side: 'right', rateOffset: 0.01 },
+    ];
 
-    this.engineOuter = safeHowl({
-      src: ['/sounds/engine/engn1_out.wav'],
-      loop: true,
-      volume: 0,
-      pool: 12,
-    });
+    this.ambientLayers = ambientSpecs.map((spec) => ({
+      ...spec,
+      inner: safeHowl({
+        src: [`/sounds/engine/engn${spec.engine}_inn.wav`],
+        loop: true,
+        volume: 0,
+        pool: 12,
+      }),
+      outer: safeHowl({
+        src: [`/sounds/engine/engn${spec.engine}_out.wav`],
+        loop: true,
+        volume: 0,
+        pool: 12,
+      }),
+    }));
 
     this.warningTone = safeHowl({
-      // Keep master warning as a neutral tone. Some packs map master-warning.wav to voice callouts.
-      src: ['/sounds/alerts/master-caution.wav'],
+      src: ['/sounds/alerts/master-warning.wav'],
       volume: 0.35,
-      rate: 0.62,
+      rate: 0.9,
       pool: 20,
     });
 
@@ -169,11 +179,15 @@ export default class SoundManager {
         weightedEnginePower: this.targetAmbient,
         activeEngineRatio: this.targetAmbient > 0.01 ? 1 : 0,
         activeEngineCount: this.targetAmbient > 0.01 ? 8 : 0,
+        leftBankPower: this.targetAmbient,
+        rightBankPower: this.targetAmbient,
       };
     } else {
       const averagePower = clamp01(profile?.averagePower ?? 0);
       const weightedEnginePower = clamp01(profile?.weightedEnginePower ?? averagePower);
       const activeEngineRatio = clamp01(profile?.activeEngineRatio ?? 0);
+      const leftBankPower = clamp01(profile?.leftBankPower ?? averagePower);
+      const rightBankPower = clamp01(profile?.rightBankPower ?? averagePower);
       const intensity = clamp01(weightedEnginePower * (0.35 + 0.65 * activeEngineRatio));
 
       this.targetAmbient = intensity;
@@ -182,6 +196,8 @@ export default class SoundManager {
         weightedEnginePower,
         activeEngineRatio,
         activeEngineCount: Math.max(0, Math.min(8, Number(profile?.activeEngineCount ?? Math.round(activeEngineRatio * 8)))),
+        leftBankPower,
+        rightBankPower,
       };
     }
 
@@ -208,20 +224,33 @@ export default class SoundManager {
       this.startAmbientLoops();
     }
 
-    const innerBase = 0.16 + this.ambientProfile.activeEngineRatio * 0.18;
-    const outerBase = 0.07 + this.ambientProfile.activeEngineRatio * 0.1;
+    const innerBase = 0.12 + this.ambientProfile.activeEngineRatio * 0.21;
+    const outerBase = 0.05 + this.ambientProfile.activeEngineRatio * 0.12;
     const innerRate = 0.84 + this.ambientProfile.averagePower * 0.32;
     const outerRate = 0.8 + this.ambientProfile.averagePower * 0.24;
+    const bankBias = this.ambientProfile.rightBankPower - this.ambientProfile.leftBankPower;
+    const lastLayerIndex = Math.max(1, this.ambientLayers.length - 1);
 
-    if (canPlay(this.engineInner)) {
-      this.engineInner.volume(this.currentAmbient * innerBase);
-      this.engineInner.rate(innerRate);
-    }
+    this.ambientLayers.forEach((layer, idx) => {
+      const threshold = (idx / lastLayerIndex) * 0.9;
+      const engagement = clamp01((this.ambientProfile.activeEngineRatio - threshold) * 2.6);
+      const sideBias =
+        layer.side === 'left'
+          ? Math.max(0.65, Math.min(1.35, 1 - bankBias * 0.35))
+          : layer.side === 'right'
+            ? Math.max(0.65, Math.min(1.35, 1 + bankBias * 0.35))
+            : 1;
 
-    if (canPlay(this.engineOuter)) {
-      this.engineOuter.volume(this.currentAmbient * outerBase);
-      this.engineOuter.rate(outerRate);
-    }
+      if (canPlay(layer.inner)) {
+        layer.inner.volume(this.currentAmbient * innerBase * layer.weight * engagement * sideBias);
+        layer.inner.rate(innerRate + layer.rateOffset);
+      }
+
+      if (canPlay(layer.outer)) {
+        layer.outer.volume(this.currentAmbient * outerBase * layer.weight * engagement * sideBias);
+        layer.outer.rate(outerRate + layer.rateOffset * 0.85);
+      }
+    });
 
     if (!active && this.targetAmbient <= 0.01) {
       this.stopAmbientLoops();
@@ -231,23 +260,27 @@ export default class SoundManager {
   }
 
   startAmbientLoops() {
-    if (canPlay(this.engineInner) && !this.engineInner.playing()) {
-      this.engineInner.play();
-    }
+    this.ambientLayers.forEach((layer) => {
+      if (canPlay(layer.inner) && !layer.inner.playing()) {
+        layer.inner.play();
+      }
 
-    if (canPlay(this.engineOuter) && !this.engineOuter.playing()) {
-      this.engineOuter.play();
-    }
+      if (canPlay(layer.outer) && !layer.outer.playing()) {
+        layer.outer.play();
+      }
+    });
   }
 
   stopAmbientLoops() {
-    if (canPlay(this.engineInner) && this.engineInner.playing()) {
-      this.engineInner.stop();
-    }
+    this.ambientLayers.forEach((layer) => {
+      if (canPlay(layer.inner) && layer.inner.playing()) {
+        layer.inner.stop();
+      }
 
-    if (canPlay(this.engineOuter) && this.engineOuter.playing()) {
-      this.engineOuter.stop();
-    }
+      if (canPlay(layer.outer) && layer.outer.playing()) {
+        layer.outer.stop();
+      }
+    });
   }
 
   triggerWarning(key) {
@@ -406,13 +439,15 @@ export default class SoundManager {
     this.stopAlertLoop();
     this.setAmbientProfile(0);
 
-    if (canPlay(this.engineInner)) {
-      this.engineInner.stop();
-    }
+    this.ambientLayers.forEach((layer) => {
+      if (canPlay(layer.inner)) {
+        layer.inner.stop();
+      }
 
-    if (canPlay(this.engineOuter)) {
-      this.engineOuter.stop();
-    }
+      if (canPlay(layer.outer)) {
+        layer.outer.stop();
+      }
+    });
 
     if (canPlay(this.warningTone)) {
       this.warningTone.stop();
