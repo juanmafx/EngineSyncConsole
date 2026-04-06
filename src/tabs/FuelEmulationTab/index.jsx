@@ -218,10 +218,17 @@ export function FuelEmulationTab({
           <StatusPill label="CROSSFEED" on={crossfeed} tone="warn" />
           <StatusPill label="BOOST PUMP" on={boost} tone="ok" />
           <StatusPill label="TRANSFER" on={transfer} tone="ok" />
-          <StatusPill label="FUEL IMBALANCE" on={metrics.symmetryDelta > 2.2} tone="warn" />
+          <StatusPill label="FUEL IMBALANCE" on={metrics.tankImbalancePct > 2.2} tone="warn" />
+          <StatusPill label="THR ASYM" on={metrics.symmetryDelta > 2.2} tone="warn" />
         </div>
         <div className="summary-row">
-          <span>Left/Right Imbalance</span>
+          <span>Tank Imbalance (L/R Wing)</span>
+          <strong className={metrics.tankImbalancePct > 2.2 ? 'warn-text' : ''}>
+            {metrics.tankImbalanceLb.toFixed(0)} lb ({metrics.tankImbalancePct.toFixed(2)}%)
+          </strong>
+        </div>
+        <div className="summary-row">
+          <span>Throttle Asymmetry (L/R)</span>
           <strong className={metrics.symmetryDelta > 2.2 ? 'warn-text' : ''}>{metrics.symmetryDelta.toFixed(2)}%</strong>
         </div>
         <div className="switch-row">

@@ -21,8 +21,12 @@ export function evaluateAlertState(simState) {
     cautions.add('engine_degraded');
   }
 
-  if (simState.symmetryDelta > 2.2) {
+  if (simState.tankImbalancePct > 2.2) {
     cautions.add('fuel_imbalance');
+  }
+
+  if (simState.symmetryDelta > 2.2) {
+    cautions.add('throttle_asymmetry');
   }
 
   if (simState.busA < 25 || simState.busB < 25) {

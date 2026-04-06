@@ -338,7 +338,7 @@ export default class SoundManager {
     const now = Date.now();
     const cooldownKey = `${priority}:${key}`;
     let cooldownMs = priority === 1 ? 3500 : 5000;
-    if (key === 'gear_unsafe' || key === 'fuel_imbalance') {
+    if (key === 'gear_unsafe' || key === 'fuel_imbalance' || key === 'throttle_asymmetry') {
       cooldownMs = 12000;
     }
     const last = this.cooldowns.get(cooldownKey) ?? 0;

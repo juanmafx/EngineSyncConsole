@@ -8,7 +8,7 @@ EngineSyncConsole is a browser-based avionics/systems console inspired by TF33-c
 - 8-engine simulation model with independent throttle controls (E1-E8).
 - Target EPR command plus per-engine EPR actual monitoring.
 - Live engine metrics: RPM, EGT, oil pressure, oil temperature, and trend rate.
-- Throttle symmetry and left/right imbalance tracking.
+- Throttle symmetry tracking and separate wing-tank fuel imbalance monitoring.
 - Engine fault injection on a selected engine (degraded performance behavior).
 - Fuel model with aircraft-style tanks: FWD, AFT, LEFT WING, RIGHT WING.
 - Fuel transfer mode and crossfeed equalization behavior.
@@ -24,7 +24,7 @@ EngineSyncConsole is a browser-based avionics/systems console inspired by TF33-c
 - Manual throttle override window to temporarily bypass autothrottle.
 - Gear simulation with transit delay, lock indications (nose/left/right), and unsafe detection.
 - Master caution/warning logic and caution count aggregation.
-- Annunciators for key conditions (EGT high/critical, low oil pressure, fuel imbalance, electrical bus low, ice alarm, gear unsafe, engine degraded).
+- Annunciators for key conditions (EGT high/critical, low oil pressure, fuel imbalance, throttle asymmetry, electrical bus low, ice alarm, gear unsafe, engine degraded).
 - Cockpit audio on/off control.
 - Cockpit master volume and alert volume controls.
 - UI switch click sounds.
@@ -89,7 +89,8 @@ The simulation is based on the **Pratt & Whitney TF33 / JT3D family** (classic l
 - `MASTER CAUTION` trigger: active when one or more caution conditions are present.
 - `EGT HIGH` caution: any engine EGT above `700 C`.
 - `LOW OIL PRESS` caution: any engine oil pressure below `35 psi`.
-- `FUEL IMBALANCE` caution: left/right throttle symmetry delta above `2.2%`.
+- `FUEL IMBALANCE` caution: left/right wing tank mass imbalance above `2.2%` of total fuel capacity.
+- `THROTTLE ASYMMETRY` caution: left/right throttle bank symmetry delta above `2.2%`.
 - `ELEC BUS LOW` caution: electrical bus A or B below `25 V`.
 - `AIRFRAME ICE` caution: anti-ice/defrost is off.
 - `ENGINE DEGRADED` caution: fault injection is enabled for the selected engine.

@@ -30,6 +30,10 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
     const leftBank = throttles.slice(0, 4).reduce((a, b) => a + b, 0);
     const rightBank = throttles.slice(4).reduce((a, b) => a + b, 0);
     const symmetryDelta = Math.abs(leftBank - rightBank) / 4;
+    const wingFuelLeft = sim.tankQty.leftWing;
+    const wingFuelRight = sim.tankQty.rightWing;
+    const tankImbalanceLb = Math.abs(wingFuelLeft - wingFuelRight);
+    const tankImbalancePct = (tankImbalanceLb / totalFuelCapacity) * 100;
 
     const hydraulicPressure = clamp(2300 + avgThrottle * 7 - (bleedAir ? 70 : 0), 1400, 3200);
     const busA = clamp(26.5 + (boost ? 0.8 : -0.7), 22, 29);
@@ -44,6 +48,7 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
       ...sim.oilTemp.map((v) => v > 123),
       ...sim.trendRates.map((v) => Math.abs(v) > 7),
       faultEnabled,
+      tankImbalancePct > 2.2,
       symmetryDelta > 2.2,
       !boost,
       !transfer,
@@ -69,6 +74,8 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
       fuelRemainingPct,
       enduranceHours,
       rangeNm,
+      tankImbalanceLb,
+      tankImbalancePct,
       symmetryDelta,
       tankQty: sim.tankQty,
       tankPct: {
