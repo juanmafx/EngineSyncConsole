@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { ENGINE_COUNT, FUEL_CAPACITY_LB } from './constants';
+import { AIRCRAFT_MASS, ENGINE_COUNT, FUEL_CAPACITY_LB } from './constants';
 import { clamp } from './flightModel';
 import { calculateTelemetryResult } from '../telemetry/results';
 
 const totalFuelCapacityLb = Object.values(FUEL_CAPACITY_LB).reduce((a, b) => a + b, 0);
 
-export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer, faultEnabled }) {
+export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer, faultEnabled, payloadLb }) {
   return useMemo(() => {
     const avgThrottle = throttles.reduce((a, b) => a + b, 0) / ENGINE_COUNT;
 
@@ -18,6 +18,7 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
       altitudeFt: sim.altitudeFt,
       verticalSpeedFpm: 0,
       fuelRemainingLb: totalFuelRemaining,
+      payloadLb,
       airspeedKt: sim.airspeedKt,
       boost,
       antiIce,
@@ -26,6 +27,12 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
     const cruiseEstimateKt = telemetry.throttleCapabilityKt;
     const enduranceHours = totalFuelFlow > 0 ? totalFuelRemaining / totalFuelFlow : 0;
     const rangeNm = enduranceHours * cruiseEstimateKt;
+    const payloadClamped = clamp(payloadLb, 0, AIRCRAFT_MASS.maxPayloadLb);
+    const grossWeightLb = AIRCRAFT_MASS.emptyWeightLb + totalFuelRemaining + payloadClamped;
+    const mtowPct = (grossWeightLb / AIRCRAFT_MASS.maxTakeoffWeightLb) * 100;
+    const payloadRatio = AIRCRAFT_MASS.maxPayloadLb > 0 ? payloadClamped / AIRCRAFT_MASS.maxPayloadLb : 0;
+    const projectedFerryRangeNm = rangeNm * (1.05 + (1 - payloadRatio) * 0.08);
+    const projectedCombatRangeNm = rangeNm * (0.74 + (1 - payloadRatio) * 0.08);
 
     const leftBank = throttles.slice(0, 4).reduce((a, b) => a + b, 0);
     const rightBank = throttles.slice(4).reduce((a, b) => a + b, 0);
@@ -74,6 +81,12 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
       fuelRemainingPct,
       enduranceHours,
       rangeNm,
+      projectedFerryRangeNm,
+      projectedCombatRangeNm,
+      payloadLb: payloadClamped,
+      emptyWeightLb: AIRCRAFT_MASS.emptyWeightLb,
+      grossWeightLb,
+      mtowPct,
       tankImbalanceLb,
       tankImbalancePct,
       symmetryDelta,
@@ -102,5 +115,5 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
       hasMasterWarning,
       iceAlarmActive,
     };
-  }, [antiIce, bleedAir, boost, faultEnabled, sim, throttles, transfer]);
+  }, [antiIce, bleedAir, boost, faultEnabled, payloadLb, sim, throttles, transfer]);
 }

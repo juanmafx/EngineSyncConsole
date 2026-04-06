@@ -57,7 +57,7 @@ export function CockpitHeader({
               </div>
               {activeAlerts.length === 0 && <div className="alerts-empty">No active warnings or cautions.</div>}
               {activeAlerts.map((alert) => (
-                <div key={alert.key} className={`alert-row ${alert.level}`}>
+                <div key={alert.id ?? `${alert.key}-${alert.label}`} className={`alert-row ${alert.level}`}>
                   <span>{alert.label}</span>
                   <strong>{alert.level === 'warning' ? 'WARNING' : 'CAUTION'}</strong>
                 </div>

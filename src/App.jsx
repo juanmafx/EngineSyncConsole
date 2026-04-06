@@ -3,7 +3,7 @@ import { evaluateAlertState } from './audio/alertRules';
 import { useCockpitAudio } from './audio/useCockpitAudio';
 import { CockpitHeader } from './components/layout/CockpitHeader';
 import { TabStrip } from './components/layout/TabStrip';
-import { ENGINE_COUNT } from './sim/constants';
+import { AIRCRAFT_MASS, ENGINE_COUNT } from './sim/constants';
 import { useMetrics } from './sim/useMetrics';
 import { useSimulationLoop } from './sim/useSimulationLoop';
 import { AutopilotTab } from './tabs/AutopilotTab';
@@ -23,21 +23,76 @@ function formatDuration(hoursFloat) {
 
 const AUTOTHROTTLE_OVERRIDE_MS = 5000;
 const AUTOTHROTTLE_SLEW_PER_TICK = 1.6;
-const ALERT_LABELS = {
-  egt_critical: 'EGT Critical',
-  egt_high: 'EGT High',
-  oil_pressure_low: 'Low Oil Pressure',
-  engine_degraded: 'Engine Degraded',
-  fuel_imbalance: 'Fuel Imbalance',
-  throttle_asymmetry: 'Throttle Asymmetry',
-  electrical_bus_low: 'Electrical Bus Low',
-  ice_alarm: 'Airframe Ice',
-  gear_unsafe: 'Gear Unsafe',
-};
+const AUTOTHROTTLE_MAX_THROTTLE = 92;
+function buildActiveAlertList({ metrics, faultEnabled, faultEngine, antiIce, gearDown, gearUnsafe, gearTransit, boost, transfer }) {
+  const rows = [];
+
+  metrics.egt.forEach((value, i) => {
+    if (value > 760) {
+      rows.push({ id: `egt_critical_e${i + 1}`, key: 'egt_critical', level: 'warning', label: `EGT Critical E${i + 1}` });
+    }
+    if (value > 700) {
+      rows.push({ id: `egt_high_e${i + 1}`, key: 'egt_high', level: 'caution', label: `EGT High E${i + 1}` });
+    }
+  });
+
+  metrics.oilPressure.forEach((value, i) => {
+    if (value < 35) {
+      rows.push({ id: `oil_pressure_low_e${i + 1}`, key: 'oil_pressure_low', level: 'caution', label: `Low Oil Pressure E${i + 1}` });
+    }
+  });
+
+  metrics.oilTemp.forEach((value, i) => {
+    if (value > 123) {
+      rows.push({ id: `oil_temp_high_e${i + 1}`, key: 'oil_temp_high', level: 'caution', label: `Oil Temp High E${i + 1}` });
+    }
+  });
+
+  metrics.trend.forEach((value, i) => {
+    if (Math.abs(value) > 7) {
+      rows.push({ id: `egt_trend_abnormal_e${i + 1}`, key: 'egt_trend_abnormal', level: 'caution', label: `EGT Trend Abnormal E${i + 1}` });
+    }
+  });
+
+  if (faultEnabled) {
+    rows.push({ id: `engine_degraded_e${faultEngine + 1}`, key: 'engine_degraded', level: 'caution', label: `Engine ${faultEngine + 1} Degraded` });
+  }
+
+  if (metrics.tankImbalancePct > 2.2) {
+    rows.push({ id: 'fuel_imbalance', key: 'fuel_imbalance', level: 'caution', label: 'Fuel Imbalance' });
+  }
+
+  if (metrics.symmetryDelta > 2.2) {
+    rows.push({ id: 'throttle_asymmetry', key: 'throttle_asymmetry', level: 'caution', label: 'Throttle Asymmetry' });
+  }
+
+  if (metrics.busA < 25 || metrics.busB < 25) {
+    rows.push({ id: 'electrical_bus_low', key: 'electrical_bus_low', level: 'caution', label: 'Electrical Bus Low' });
+  }
+
+  if (!antiIce) {
+    rows.push({ id: 'ice_alarm', key: 'ice_alarm', level: 'caution', label: 'Airframe Ice' });
+  }
+
+  if (gearDown && gearUnsafe && !gearTransit) {
+    rows.push({ id: 'gear_unsafe', key: 'gear_unsafe', level: 'caution', label: 'Gear Unsafe' });
+  }
+
+  if (!boost) {
+    rows.push({ id: 'boost_pump_off', key: 'boost_pump_off', level: 'caution', label: 'Boost Pump Off' });
+  }
+
+  if (!transfer) {
+    rows.push({ id: 'fuel_transfer_off', key: 'fuel_transfer_off', level: 'caution', label: 'Fuel Transfer Off' });
+  }
+
+  return rows;
+}
 
 export default function App() {
   const [throttles, setThrottles] = useState([63, 65, 62, 64, 63, 66, 61, 64]);
   const [targetEpr, setTargetEpr] = useState(1.88);
+  const [payloadLb, setPayloadLb] = useState(Math.round(AIRCRAFT_MASS.maxPayloadLb * 0.4));
   const [crossfeed, setCrossfeed] = useState(false);
   const [boost, setBoost] = useState(true);
   const [transfer, setTransfer] = useState(true);
@@ -71,6 +126,7 @@ export default function App() {
     targetEpr,
     antiIce,
     boost,
+    payloadLb,
     faultEnabled,
     faultEngine,
     crossfeed,
@@ -102,6 +158,7 @@ export default function App() {
     boost,
     transfer,
     faultEnabled,
+    payloadLb,
   });
 
   useEffect(() => {
@@ -119,6 +176,9 @@ export default function App() {
           fuelUsedLb: metrics.fuelUsedLb,
           enduranceHours: metrics.enduranceHours,
           rangeNm: metrics.rangeNm,
+          grossWeightLb: metrics.grossWeightLb,
+          mtowPct: metrics.mtowPct,
+          payloadLb: metrics.payloadLb,
           egt: [...metrics.egt],
           rpm: [...metrics.rpm],
           fuelFlowPerEngine: [...metrics.fuelFlowPerEngine],
@@ -139,6 +199,9 @@ export default function App() {
     metrics.fuelUsedLb,
     metrics.enduranceHours,
     metrics.rangeNm,
+    metrics.grossWeightLb,
+    metrics.mtowPct,
+    metrics.payloadLb,
     metrics.egt,
     metrics.rpm,
     metrics.fuelFlowPerEngine,
@@ -162,23 +225,28 @@ export default function App() {
         return;
       }
 
-      const speedError = targetAirspeedKt - metrics.airspeedKt;
+      const achievableTargetKt = Math.min(
+        targetAirspeedKt,
+        Math.max(190, metrics.telemetry.fullThrottleCapabilityKt - 4),
+      );
+      const speedError = achievableTargetKt - metrics.airspeedKt;
       const climbComp = Math.max(0, metrics.verticalSpeedFpm) * 0.0015;
-      const baseDemand = 34 + (targetAirspeedKt - 180) * 0.18;
+      const baseDemand = 32 + (achievableTargetKt - 180) * 0.14;
       autothrottleIntegratorRef.current = Math.max(
-        -12,
-        Math.min(12, autothrottleIntegratorRef.current + speedError * 0.01),
+        -10,
+        Math.min(10, autothrottleIntegratorRef.current + speedError * 0.007),
       );
       const demand = Math.max(
         15,
-        Math.min(100, baseDemand + speedError * 0.22 + autothrottleIntegratorRef.current + climbComp),
+        Math.min(AUTOTHROTTLE_MAX_THROTTLE, baseDemand + speedError * 0.13 + autothrottleIntegratorRef.current + climbComp),
       );
 
       setThrottles((prev) =>
         prev.map((throttle) => {
           const delta = demand - throttle;
           const step = Math.max(-AUTOTHROTTLE_SLEW_PER_TICK, Math.min(AUTOTHROTTLE_SLEW_PER_TICK, delta));
-          return Math.max(0, Math.min(100, throttle + step));
+          const next = Math.max(0, Math.min(100, throttle + step));
+          return Math.round(next * 10) / 10;
         }),
       );
     }, 500);
@@ -209,18 +277,17 @@ export default function App() {
     gearTransit,
   };
   const alertSnapshot = evaluateAlertState(simState);
-  const activeAlerts = [
-    ...[...alertSnapshot.warnings].map((key) => ({
-      key,
-      level: 'warning',
-      label: ALERT_LABELS[key] ?? key,
-    })),
-    ...[...alertSnapshot.cautions].map((key) => ({
-      key,
-      level: 'caution',
-      label: key === 'engine_degraded' ? `Engine ${faultEngine + 1} Degraded` : ALERT_LABELS[key] ?? key,
-    })),
-  ];
+  const activeAlerts = buildActiveAlertList({
+    metrics,
+    faultEnabled,
+    faultEngine,
+    antiIce,
+    gearDown,
+    gearUnsafe,
+    gearTransit,
+    boost,
+    transfer,
+  });
 
   const { playUiClick } = useCockpitAudio({
     enabled: audioEnabled,
@@ -323,6 +390,8 @@ export default function App() {
         <FuelEmulationTab
           metrics={metrics}
           telemetryHistory={telemetryHistory}
+          payloadLb={payloadLb}
+          setPayloadLb={setPayloadLb}
           crossfeed={crossfeed}
           setCrossfeed={setCrossfeed}
           boost={boost}

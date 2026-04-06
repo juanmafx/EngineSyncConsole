@@ -2,6 +2,10 @@ import React from 'react';
 import { ENGINE_COUNT } from '../../sim/constants';
 import { DataRow, Module, ToggleButton } from '../../components/cockpit';
 
+function formatThrottlePct(value) {
+  return `${(Math.round(value * 10) / 10).toFixed(1)}%`;
+}
+
 export function EnginesTab({
   throttles,
   setThrottleAt,
@@ -29,7 +33,7 @@ export function EnginesTab({
                 onChange={(e) => setThrottleAt(i, Number(e.target.value))}
                 className="slider yellow"
               />
-              <strong>{value}%</strong>
+              <strong>{formatThrottlePct(value)}</strong>
             </label>
           ))}
         </div>

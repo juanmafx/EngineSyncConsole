@@ -63,23 +63,26 @@ export default class SoundManager {
     }
 
     const ambientSpecs = [
-      { engine: 1, weight: 1.0, side: 'center', rateOffset: -0.02 },
-      { engine: 2, weight: 0.92, side: 'left', rateOffset: 0.0 },
-      { engine: 3, weight: 0.86, side: 'right', rateOffset: 0.02 },
-      { engine: 5, weight: 0.79, side: 'left', rateOffset: -0.01 },
-      { engine: 7, weight: 0.74, side: 'right', rateOffset: 0.01 },
+      { engine: 1, sampleEngine: 1, weight: 1.0, side: 'left', rateOffset: -0.02 },
+      { engine: 2, sampleEngine: 2, weight: 0.95, side: 'left', rateOffset: -0.01 },
+      { engine: 3, sampleEngine: 3, weight: 0.91, side: 'left', rateOffset: 0.0 },
+      { engine: 4, sampleEngine: 5, weight: 0.87, side: 'left', rateOffset: 0.01 },
+      { engine: 5, sampleEngine: 7, weight: 0.84, side: 'right', rateOffset: -0.01 },
+      { engine: 6, sampleEngine: 5, weight: 0.8, side: 'right', rateOffset: 0.0 },
+      { engine: 7, sampleEngine: 3, weight: 0.76, side: 'right', rateOffset: 0.01 },
+      { engine: 8, sampleEngine: 2, weight: 0.72, side: 'right', rateOffset: 0.02 },
     ];
 
     this.ambientLayers = ambientSpecs.map((spec) => ({
       ...spec,
       inner: safeHowl({
-        src: [`/sounds/engine/engn${spec.engine}_inn.wav`],
+        src: [`/sounds/engine/engn${spec.sampleEngine}_inn.wav`],
         loop: true,
         volume: 0,
         pool: 12,
       }),
       outer: safeHowl({
-        src: [`/sounds/engine/engn${spec.engine}_out.wav`],
+        src: [`/sounds/engine/engn${spec.sampleEngine}_out.wav`],
         loop: true,
         volume: 0,
         pool: 12,
@@ -87,9 +90,10 @@ export default class SoundManager {
     }));
 
     this.warningTone = safeHowl({
-      src: ['/sounds/alerts/master-warning.wav'],
+      // Keep generic master warning as neutral tone to avoid false "TOO LOW GEAR"-style callouts.
+      src: ['/sounds/alerts/master-caution.wav'],
       volume: 0.35,
-      rate: 0.9,
+      rate: 0.62,
       pool: 20,
     });
 
@@ -218,9 +222,8 @@ export default class SoundManager {
       this.currentAmbient = this.targetAmbient;
     }
 
-    const active = this.currentAmbient > 0.01;
-
-    if (active) {
+    // Keep ambient loops running while audio is enabled to avoid stop/start discontinuities.
+    if (this.enabled) {
       this.startAmbientLoops();
     }
 
@@ -252,7 +255,7 @@ export default class SoundManager {
       }
     });
 
-    if (!active && this.targetAmbient <= 0.01) {
+    if (!this.enabled && this.targetAmbient <= 0.01) {
       this.stopAmbientLoops();
       clearInterval(this.ambientTicker);
       this.ambientTicker = null;

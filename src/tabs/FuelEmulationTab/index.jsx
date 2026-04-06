@@ -1,6 +1,15 @@
 import React from 'react';
 import { clamp } from '../../sim/flightModel';
 import { DataRow, Module, StatusPill, ToggleButton } from '../../components/cockpit';
+import { AIRCRAFT_MASS } from '../../sim/constants';
+
+const PAYLOAD_PRESETS = [
+  { key: 'ferry', label: 'Ferry (0)', value: 0 },
+  { key: 'light', label: 'Light Combat', value: 20000 },
+  { key: 'medium', label: 'Medium Combat', value: 40000 },
+  { key: 'heavy', label: 'Heavy Combat', value: 55000 },
+  { key: 'max', label: 'Max Payload', value: AIRCRAFT_MASS.maxPayloadLb },
+];
 
 function buildLinePoints(values, minY, maxY, width, height) {
   if (!values.length) {
@@ -93,6 +102,8 @@ function CapabilityTrendChart({ title, unit, values, min, max, colorClass = 'tea
 export function FuelEmulationTab({
   metrics,
   telemetryHistory = [],
+  payloadLb,
+  setPayloadLb,
   crossfeed,
   setCrossfeed,
   boost,
@@ -107,6 +118,9 @@ export function FuelEmulationTab({
   const avgThrottleSeries = telemetryHistory.map((p) => p.avgThrottlePct ?? 0);
   const enduranceSeries = telemetryHistory.map((p) => p.enduranceHours ?? 0);
   const rangeSeries = telemetryHistory.map((p) => p.rangeNm ?? 0);
+  const grossWeightSeries = telemetryHistory.map((p) => p.grossWeightLb ?? 0);
+  const mtowSeries = telemetryHistory.map((p) => p.mtowPct ?? 0);
+  const payloadSeries = telemetryHistory.map((p) => p.payloadLb ?? payloadLb);
   const recentAvgThrottle =
     avgThrottleSeries.length > 0 ? avgThrottleSeries.slice(Math.max(0, avgThrottleSeries.length - 20)) : [];
   const avgThrottleWindow =
@@ -115,6 +129,8 @@ export function FuelEmulationTab({
       : 0;
   const enduranceMax = Math.max(1, ...enduranceSeries, metrics.enduranceHours * 1.05);
   const rangeMax = Math.max(100, ...rangeSeries, metrics.rangeNm * 1.05);
+  const grossWeightMax = Math.max(AIRCRAFT_MASS.emptyWeightLb + AIRCRAFT_MASS.maxFuelLb, ...grossWeightSeries, metrics.grossWeightLb * 1.02);
+  const payloadMax = AIRCRAFT_MASS.maxPayloadLb;
 
   return (
     <div className="gauge-grid">
@@ -143,6 +159,22 @@ export function FuelEmulationTab({
           <span>Endurance / Predicted Range</span>
           <strong>
             {formatDuration(metrics.enduranceHours)} / {metrics.rangeNm.toFixed(0)} nm
+          </strong>
+        </div>
+        <div className="summary-row">
+          <span>Payload</span>
+          <strong>{payloadLb.toFixed(0)} lb</strong>
+        </div>
+        <div className="summary-row">
+          <span>Gross Weight / % MTOW</span>
+          <strong>
+            {metrics.grossWeightLb.toFixed(0)} lb / {metrics.mtowPct.toFixed(1)}%
+          </strong>
+        </div>
+        <div className="summary-row">
+          <span>Empty / Fuel / Payload</span>
+          <strong>
+            {metrics.emptyWeightLb.toFixed(0)} / {metrics.totalFuelRemaining.toFixed(0)} / {metrics.payloadLb.toFixed(0)} lb
           </strong>
         </div>
         <div className="tank-gauge-grid">
@@ -236,6 +268,40 @@ export function FuelEmulationTab({
           <ToggleButton active={boost} onClick={() => toggleWithClick(setBoost)} label="Boost" />
           <ToggleButton active={transfer} onClick={() => toggleWithClick(setTransfer)} label="Transfer" />
         </div>
+        <div className="summary-row">
+          <span>Payload Preset</span>
+          <label className="telemetry-engine-select">
+            <select
+              value={
+                PAYLOAD_PRESETS.some((preset) => preset.value === Math.round(payloadLb)) ? Math.round(payloadLb) : 'custom'
+              }
+              onChange={(e) => {
+                if (e.target.value === 'custom') return;
+                setPayloadLb(Number(e.target.value));
+              }}
+            >
+              {PAYLOAD_PRESETS.map((preset) => (
+                <option key={preset.key} value={preset.value}>
+                  {preset.label}
+                </option>
+              ))}
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+        </div>
+        <label className="audio-control">
+          Payload (lb)
+          <input
+            type="range"
+            min={0}
+            max={AIRCRAFT_MASS.maxPayloadLb}
+            step={500}
+            value={payloadLb}
+            onChange={(e) => setPayloadLb(Number(e.target.value))}
+            className="slider"
+          />
+          <strong>{payloadLb.toFixed(0)} lb</strong>
+        </label>
       </Module>
 
       <Module title="Fuel Emulation - Session Consumption Graph" colorClass="blue">
@@ -256,6 +322,22 @@ export function FuelEmulationTab({
           max={rangeMax}
           colorClass="amber"
         />
+        <CapabilityTrendChart
+          title="Gross Weight"
+          unit="lb"
+          values={grossWeightSeries}
+          min={AIRCRAFT_MASS.emptyWeightLb}
+          max={grossWeightMax}
+          colorClass="warn"
+        />
+        <CapabilityTrendChart
+          title="Payload During Session"
+          unit="lb"
+          values={payloadSeries}
+          min={0}
+          max={payloadMax}
+          colorClass="teal"
+        />
         <div className="summary-row">
           <span>Current Engines at 100%</span>
           <strong>{enginesAtMaxSeries.length ? enginesAtMaxSeries[enginesAtMaxSeries.length - 1] : 0} / 8</strong>
@@ -269,6 +351,22 @@ export function FuelEmulationTab({
           <strong>
             {metrics.enduranceHours.toFixed(2)} hr / {metrics.rangeNm.toFixed(0)} nm
           </strong>
+        </div>
+        <div className="summary-row">
+          <span>Projected Ferry / Combat Range</span>
+          <strong>
+            {metrics.projectedFerryRangeNm.toFixed(0)} / {metrics.projectedCombatRangeNm.toFixed(0)} nm
+          </strong>
+        </div>
+        <div className="summary-row">
+          <span>Gross Weight / % MTOW</span>
+          <strong>
+            {metrics.grossWeightLb.toFixed(0)} lb / {metrics.mtowPct.toFixed(1)}%
+          </strong>
+        </div>
+        <div className="summary-row">
+          <span>Session Max % MTOW</span>
+          <strong>{Math.max(...mtowSeries, metrics.mtowPct).toFixed(1)}%</strong>
         </div>
       </Module>
     </div>

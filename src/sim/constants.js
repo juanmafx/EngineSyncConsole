@@ -14,3 +14,9 @@ export const AIRCRAFT_LIMITS = {
   rangeNm: 7652,
 };
 
+export const AIRCRAFT_MASS = {
+  emptyWeightLb: 185000,
+  maxTakeoffWeightLb: 488000,
+  maxFuelLb: 312197,
+  maxPayloadLb: 70000,
+};
