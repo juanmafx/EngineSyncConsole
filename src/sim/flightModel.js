@@ -188,5 +188,6 @@ export function initSimulation(throttles, targetEpr, antiIce, boost) {
     headingDeg: 90,
     airspeedKt: 442,
     verticalSpeedFpm: 0,
+    afcsSaturated: false,
   };
 }

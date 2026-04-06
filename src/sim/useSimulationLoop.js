@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { AIRCRAFT_LIMITS, ENGINE_COUNT, TICK_SECONDS } from './constants';
+import { ENGINE_COUNT, TICK_SECONDS } from './constants';
 import { clamp, initSimulation, updateEngine } from './flightModel';
+import { updateAircraftKinematics } from './aircraftKinematics';
 import { calculateTelemetryResult } from '../telemetry/results';
 
 export function useSimulationLoop({
@@ -58,10 +59,10 @@ export function useSimulationLoop({
         const consumedLb = (totalFuelFlow / 3600) * TICK_SECONDS;
         const totalFuelRemainingNow = Object.values(prev.tankQty).reduce((a, b) => a + b, 0);
         let distanceNm = prev.distanceNm;
-        let altitudeFt = prev.altitudeFt;
+        const altitudeFt = prev.altitudeFt;
         let headingDeg = prev.headingDeg;
-        let airspeedKt = prev.airspeedKt;
-        let verticalSpeedFpm = prev.verticalSpeedFpm;
+        const airspeedKt = prev.airspeedKt;
+        const verticalSpeedFpm = prev.verticalSpeedFpm;
 
         if (transfer) {
           nextTankQty.fwd -= consumedLb * 0.45;
@@ -99,50 +100,34 @@ export function useSimulationLoop({
           faultEnabled,
           availableThrustLbf: totalThrustAvailableLbf,
         });
-        const grossWeightLb = perf.grossWeightLb;
-        const massSlugs = grossWeightLb / 32.174;
-        const accelFps2 = massSlugs > 0 ? perf.thrustMarginLbf / massSlugs : 0;
-        airspeedKt += (accelFps2 / 1.68781) * TICK_SECONDS;
+        // Centralized kinematics update: the only writer of speed/VS/altitude.
+        const kinematics = updateAircraftKinematics(
+          {
+            airspeedKt,
+            verticalSpeedFpm,
+            altitudeFt,
+            autopilotOn,
+            afcsMode,
+            targetAltitudeFt,
+            targetVsFpm,
+            thrustAvailableLbf: totalThrustAvailableLbf,
+            antiIce,
+            grossWeightLb: perf.grossWeightLb,
+          },
+          TICK_SECONDS,
+        );
 
-        let desiredVsFpm = 0;
-        const altitudeErrorFt = targetAltitudeFt - altitudeFt;
-        const isAltitudeHold = autopilotOn && afcsMode?.altitude !== 'OFF';
-        const resolvedAltitudeMode = isAltitudeHold
-          ? Math.abs(altitudeErrorFt) < 350
-            ? 'CAPTURE'
-            : afcsMode?.altitude ?? 'HOLD'
-          : 'OFF';
-        const resolvedVerticalMode = isAltitudeHold ? 'NONE' : afcsMode?.vertical ?? 'NONE';
-
-        if (autopilotOn) {
-          if (resolvedAltitudeMode !== 'OFF') {
-            const holdGain = resolvedAltitudeMode === 'CAPTURE' ? 0.08 : 0.12;
-            desiredVsFpm = clamp(altitudeErrorFt * holdGain, -2200, 2200);
-          } else if (resolvedVerticalMode === 'VS' || resolvedVerticalMode === 'FPA') {
-            desiredVsFpm = resolvedVerticalMode === 'FPA' ? clamp(targetVsFpm * 0.85, -2600, 2600) : clamp(targetVsFpm, -3000, 3000);
-          }
-
-          const climbCapability = perf.climbCapabilityFpm;
-          const maxUpFpm = clamp(Math.max(250, climbCapability), 250, 3200);
-          const maxDownFpm = clamp(Math.min(-250, climbCapability - 200), -3200, -250);
-          const boundedDesiredVs = clamp(desiredVsFpm, maxDownFpm, maxUpFpm);
-          verticalSpeedFpm += (boundedDesiredVs - verticalSpeedFpm) * 0.21;
-          altitudeFt += verticalSpeedFpm * (TICK_SECONDS / 60);
-          altitudeFt = clamp(altitudeFt, 1000, AIRCRAFT_LIMITS.ceilingFt);
-
-          if (headingHold || navCoupled) {
-            const rawDelta = ((targetHeadingDeg - headingDeg + 540) % 360) - 180;
-            const headingRateDps = clamp(rawDelta * 0.08, -3, 3);
-            headingDeg = (headingDeg + headingRateDps * TICK_SECONDS + 360) % 360;
-          }
-        } else {
-          verticalSpeedFpm += (0 - verticalSpeedFpm) * 0.14;
-          altitudeFt += verticalSpeedFpm * (TICK_SECONDS / 60);
-          altitudeFt = clamp(altitudeFt, 1000, AIRCRAFT_LIMITS.ceilingFt);
+        if (autopilotOn && (headingHold || navCoupled)) {
+          const rawDelta = ((targetHeadingDeg - headingDeg + 540) % 360) - 180;
+          const headingRateDps = clamp(rawDelta * 0.08, -3, 3);
+          headingDeg = (headingDeg + headingRateDps * TICK_SECONDS + 360) % 360;
         }
 
-        airspeedKt = clamp(airspeedKt, 180, AIRCRAFT_LIMITS.maxSpeedKt);
-        distanceNm += airspeedKt * (TICK_SECONDS / 3600);
+        const nextAirspeedKt = kinematics.airspeedKt;
+        const nextVerticalSpeedFpm = kinematics.verticalSpeedFpm;
+        const nextAltitudeFt = kinematics.altitudeFt;
+        const afcsSaturated = kinematics.afcsSaturated;
+        distanceNm += nextAirspeedKt * (TICK_SECONDS / 3600);
 
         return {
           engines: nextEngines,
@@ -162,10 +147,11 @@ export function useSimulationLoop({
           elapsedSeconds: prev.elapsedSeconds + TICK_SECONDS,
           distanceNm,
           fuelUsedLb: prev.fuelUsedLb + consumedLb,
-          altitudeFt,
+          altitudeFt: nextAltitudeFt,
           headingDeg,
-          airspeedKt,
-          verticalSpeedFpm,
+          airspeedKt: nextAirspeedKt,
+          verticalSpeedFpm: nextVerticalSpeedFpm,
+          afcsSaturated,
         };
       });
     }, TICK_SECONDS * 1000);

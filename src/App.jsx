@@ -24,6 +24,27 @@ function formatDuration(hoursFloat) {
 const AUTOTHROTTLE_OVERRIDE_MS = 5000;
 const AUTOTHROTTLE_SLEW_PER_TICK = 1.6;
 const AUTOTHROTTLE_MAX_THROTTLE = 92;
+const AUTOTHROTTLE_MIN_THROTTLE = 15;
+
+function computeAutothrottleTarget({
+  targetAirspeedKt,
+  currentAirspeedKt,
+  verticalSpeedFpm,
+  fullThrottleCapabilityKt,
+  integrator,
+}) {
+  const achievableTargetKt = Math.min(targetAirspeedKt, Math.max(190, fullThrottleCapabilityKt - 4));
+  const speedError = achievableTargetKt - currentAirspeedKt;
+  const climbComp = Math.max(0, verticalSpeedFpm) * 0.0015;
+  const baseDemand = 32 + (achievableTargetKt - 180) * 0.14;
+  const nextIntegrator = Math.max(-10, Math.min(10, integrator + speedError * 0.007));
+  const throttleTarget = Math.max(
+    AUTOTHROTTLE_MIN_THROTTLE,
+    Math.min(AUTOTHROTTLE_MAX_THROTTLE, baseDemand + speedError * 0.13 + nextIntegrator + climbComp),
+  );
+
+  return { throttleTarget, nextIntegrator };
+}
 function buildActiveAlertList({ metrics, faultEnabled, faultEngine, antiIce, gearDown, gearUnsafe, gearTransit, boost, transfer }) {
   const rows = [];
 
@@ -225,31 +246,26 @@ export default function App() {
         return;
       }
 
-      const achievableTargetKt = Math.min(
+      // AFCS Speed Hold commands throttle target from speed error.
+      // It never writes aircraft speed directly; acceleration comes from the physics layer.
+      const { throttleTarget, nextIntegrator } = computeAutothrottleTarget({
         targetAirspeedKt,
-        Math.max(190, metrics.telemetry.fullThrottleCapabilityKt - 4),
-      );
-      const speedError = achievableTargetKt - metrics.airspeedKt;
-      const climbComp = Math.max(0, metrics.verticalSpeedFpm) * 0.0015;
-      const baseDemand = 32 + (achievableTargetKt - 180) * 0.14;
-      autothrottleIntegratorRef.current = Math.max(
-        -10,
-        Math.min(10, autothrottleIntegratorRef.current + speedError * 0.007),
-      );
-      const demand = Math.max(
-        15,
-        Math.min(AUTOTHROTTLE_MAX_THROTTLE, baseDemand + speedError * 0.13 + autothrottleIntegratorRef.current + climbComp),
-      );
+        currentAirspeedKt: metrics.airspeedKt,
+        verticalSpeedFpm: metrics.verticalSpeedFpm,
+        fullThrottleCapabilityKt: metrics.telemetry.fullThrottleCapabilityKt,
+        integrator: autothrottleIntegratorRef.current,
+      });
+      autothrottleIntegratorRef.current = nextIntegrator;
 
       setThrottles((prev) =>
         prev.map((throttle) => {
-          const delta = demand - throttle;
+          const delta = throttleTarget - throttle;
           const step = Math.max(-AUTOTHROTTLE_SLEW_PER_TICK, Math.min(AUTOTHROTTLE_SLEW_PER_TICK, delta));
           const next = Math.max(0, Math.min(100, throttle + step));
           return Math.round(next * 10) / 10;
         }),
       );
-    }, 500);
+    }, 100);
 
     return () => clearInterval(interval);
   }, [autopilotOn, speedHold, targetAirspeedKt, metrics.airspeedKt, metrics.verticalSpeedFpm]);

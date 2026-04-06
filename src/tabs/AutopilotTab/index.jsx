@@ -73,7 +73,7 @@ export function AutopilotTab({
           <StatusPill label="ATT HOLD" on={autopilotOn} tone="ok" />
           <StatusPill label="SAS ACTIVE" on={sasOn} tone="ok" />
           <StatusPill label="YAW DAMPER" on={yawDamperOn} tone="ok" />
-          <StatusPill label="AFCS MONITOR" on={autopilotOn} tone="warn" />
+          <StatusPill label="AFCS MONITOR" on={autopilotOn && metrics.afcsSaturated} tone="warn" />
         </div>
 
         <div className="autopilot-grid">
@@ -178,6 +178,7 @@ export function AutopilotTab({
           <StatusPill label="TRIM FLAG" on={flagTrim} tone="warn" />
           <StatusPill label="SPD FLAG" on={flagAirspeed} tone="warn" />
           <StatusPill label="ALT FLAG" on={flagAltitude} tone="warn" />
+          <StatusPill label="AFCS SAT" on={autopilotOn && metrics.afcsSaturated} tone="warn" />
         </div>
         <div className="summary-row">
           <span>Aircraft Ceiling</span>
