@@ -38,6 +38,71 @@ Multi-Engine Console is a React-based central avionics simulation console for en
 - Telemetry tab with live trend chart for vertical speed.
 - Built with React + Vite and organized in modular tabs: Engines, Gear, Flight Commands, Fuel Emulation, Autopilot, Telemetry.
 
+## Alert and Control Logic
+
+- `MASTER WARNING` trigger: any engine EGT above `680 C`.
+- `MASTER CAUTION` trigger: active when one or more caution conditions are present.
+- `EGT HIGH` caution: any engine EGT above `650 C`.
+- `LOW OIL PRESS` caution: any engine oil pressure below `35 psi`.
+- `FUEL IMBALANCE` caution: left/right throttle symmetry delta above `2.2%`.
+- `ELEC BUS LOW` caution: electrical bus A or B below `25 V`.
+- `AIRFRAME ICE` caution: anti-ice/defrost is off.
+- `ENGINE DEGRADED` caution: fault injection is enabled for the selected engine.
+- `GEAR UNSAFE` caution: gear lever is down, gear is not locked, and gear is not in transit.
+- Gear transit behavior: when gear is toggled, lock state updates after a short transition delay.
+- Defrost behavior: `Ice Defrost`/anti-ice can be toggled on or off; when off, airframe ice caution remains active.
+- Overpower/over-temp behavior: high EGT values move from caution (`>650 C`) to warning (`>680 C`).
+- Oil trend behavior: per-engine temperature trend is shown in `C/s`; abnormal trend magnitude (`|trend| > 7`) contributes to caution count.
+
+## Autopilot and Engine Power
+
+- AFCS controls are fully toggleable (`on/off`) for:
+  - AFCS master
+  - Altitude hold
+  - Heading hold
+  - Nav coupled
+  - Speed hold
+- AFCS target selectors:
+  - Altitude target (ft)
+  - Heading target (deg)
+  - Airspeed target (kt)
+  - Vertical command (fpm)
+- Engine power auto-control (autothrottle):
+  - Active only when `AFCS master` is on and `Speed Hold` is enabled.
+  - Uses current airspeed error vs target airspeed to adjust all throttles.
+  - Includes smoothing/integrator behavior to avoid abrupt throttle jumps.
+  - Manual throttle movement temporarily overrides autothrottle for `5 seconds`, then auto-control resumes.
+
+## Screenshots
+
+### Main Overview
+
+![Main Overview](docs/screenshots/main-overview.png)
+
+### Engines
+
+![Engines Tab](docs/screenshots/engines-tab.png)
+
+### Gear
+
+![Gear Tab](docs/screenshots/gear-tab.png)
+
+### Flight Commands
+
+![Flight Commands Tab](docs/screenshots/flight-commands-tab.png)
+
+### Fuel Emulation
+
+![Fuel Emulation Tab](docs/screenshots/fuel-emulation-tab.png)
+
+### Autopilot
+
+![Autopilot Tab](docs/screenshots/autopilot-tab.png)
+
+### Telemetry
+
+![Telemetry Tab](docs/screenshots/telemetry-tab.png)
+
 ## Run
 
 ```bash
