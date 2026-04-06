@@ -49,8 +49,9 @@ function deriveEngineOutputs({ throttle, N1, N2, health, antiIce, boost, targetE
 
 export function createEngine({ throttle, health = 1, antiIce, boost, targetEpr, engineIndex, avgThrottle }) {
   const command = clamp(throttle, 0, 1);
-  const N2 = clamp(60 + command * 40 + (engineIndex % 3 === 0 ? -0.6 : 0.6), 60, 100);
-  const N1 = clamp(30 + (N2 - 60) * 1.72 + (engineIndex % 2 === 0 ? -0.8 : 0.8), 30, 100);
+  const efficiency = 0.985 + Math.random() * 0.03;
+  const N2 = clamp((60 + command * 40 + (engineIndex % 3 === 0 ? -0.6 : 0.6)) * efficiency, 60, 100);
+  const N1 = clamp((30 + (N2 - 60) * 1.72 + (engineIndex % 2 === 0 ? -0.8 : 0.8)) * efficiency, 30, 100);
   const outputs = deriveEngineOutputs({
     throttle: command,
     N1,
@@ -77,20 +78,27 @@ export function createEngine({ throttle, health = 1, antiIce, boost, targetEpr, 
     n2Rpm: outputs.n2Rpm,
     rpm: outputs.rpm,
     epr: outputs.epr,
+    n1Noise: 0,
+    egtNoise: 0,
+    efficiency,
   };
 }
 
 export function updateEngine(engine, dt, { throttle, health = 1, antiIce, boost, targetEpr, engineIndex, avgThrottle }) {
   const command = clamp(throttle, 0, 1);
   const nextHealth = clamp(health, 0.5, 1);
+  const efficiency = clamp(engine.efficiency ?? 1, 0.97, 1.03);
 
-  const n2Target = clamp(60 + command * 40 + (engineIndex % 3 === 0 ? -0.6 : 0.6), 60, 100);
+  const n2Target = clamp((60 + command * 40 + (engineIndex % 3 === 0 ? -0.6 : 0.6)) * efficiency, 60, 100);
   const n2Tau = n2Target > engine.N2 ? 4.6 : 7.4; // slow legacy spool response
   const N2 = clamp(engine.N2 + ((n2Target - engine.N2) * dt) / n2Tau, 60, 100);
 
-  const n1Target = clamp(30 + (N2 - 60) * 1.72 + (engineIndex % 2 === 0 ? -0.8 : 0.8), 30, 100);
+  const n1Target = clamp((30 + (N2 - 60) * 1.72 + (engineIndex % 2 === 0 ? -0.8 : 0.8)) * efficiency, 30, 100);
   const n1Tau = n1Target > engine.N1 ? 5.4 : 8.2;
-  const N1 = clamp(engine.N1 + ((n1Target - engine.N1) * dt) / n1Tau, 30, 100);
+  const n1Base = clamp(engine.N1 + ((n1Target - engine.N1) * dt) / n1Tau, 30, 100);
+  const n1NoiseTarget = (Math.random() - 0.5) * 1.0; // +/-0.5 N1 random variation
+  const n1Noise = clamp((engine.n1Noise ?? 0) + (n1NoiseTarget - (engine.n1Noise ?? 0)) * 0.22, -0.5, 0.5);
+  const N1 = clamp(n1Base + n1Noise, 30, 100);
 
   const outputs = deriveEngineOutputs({
     throttle: command,
@@ -103,13 +111,16 @@ export function updateEngine(engine, dt, { throttle, health = 1, antiIce, boost,
     engineIndex,
     avgThrottle,
   });
+  const egtNoiseTarget = (Math.random() - 0.5) * 10; // +/-5 EGT random variation
+  const egtNoise = clamp((engine.egtNoise ?? 0) + (egtNoiseTarget - (engine.egtNoise ?? 0)) * 0.14, -5, 5);
+  const egt = clamp(outputs.EGT + egtNoise, 300, 805);
 
   return {
     throttle: command,
     health: nextHealth,
     N1,
     N2,
-    EGT: outputs.EGT,
+    EGT: egt,
     fuelFlow: outputs.fuelFlow,
     oilTemp: outputs.oilTemp,
     oilPressure: outputs.oilPressure,
@@ -118,6 +129,9 @@ export function updateEngine(engine, dt, { throttle, health = 1, antiIce, boost,
     n2Rpm: outputs.n2Rpm,
     rpm: outputs.rpm,
     epr: outputs.epr,
+    n1Noise,
+    egtNoise,
+    efficiency,
   };
 }
 

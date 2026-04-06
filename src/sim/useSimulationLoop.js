@@ -14,7 +14,7 @@ export function useSimulationLoop({
   crossfeed,
   transfer,
   autopilotOn,
-  altitudeHold,
+  afcsMode,
   targetAltitudeFt,
   targetVsFpm,
   headingHold,
@@ -50,6 +50,7 @@ export function useSimulationLoop({
         const oilTemp = nextEngines.map((engine) => engine.oilTemp);
         const fuelFlow = nextEngines.map((engine) => engine.fuelFlow);
         const thrustLbf = nextEngines.map((engine) => engine.thrustLbf);
+        const totalThrustAvailableLbf = thrustLbf.reduce((a, b) => a + b, 0);
         const trendRates = egt.map((v, i) => (v - prev.egt[i]) / TICK_SECONDS);
 
         const nextTankQty = { ...prev.tankQty };
@@ -96,13 +97,36 @@ export function useSimulationLoop({
           boost,
           antiIce,
           faultEnabled,
+          availableThrustLbf: totalThrustAvailableLbf,
         });
-        const attainableSpeedKt = perf.throttleCapabilityKt;
+        const grossWeightLb = perf.grossWeightLb;
+        const massSlugs = grossWeightLb / 32.174;
+        const accelFps2 = massSlugs > 0 ? perf.thrustMarginLbf / massSlugs : 0;
+        airspeedKt += (accelFps2 / 1.68781) * TICK_SECONDS;
+
+        let desiredVsFpm = 0;
+        const altitudeErrorFt = targetAltitudeFt - altitudeFt;
+        const isAltitudeHold = autopilotOn && afcsMode?.altitude !== 'OFF';
+        const resolvedAltitudeMode = isAltitudeHold
+          ? Math.abs(altitudeErrorFt) < 350
+            ? 'CAPTURE'
+            : afcsMode?.altitude ?? 'HOLD'
+          : 'OFF';
+        const resolvedVerticalMode = isAltitudeHold ? 'NONE' : afcsMode?.vertical ?? 'NONE';
 
         if (autopilotOn) {
-          const desiredVs = altitudeHold ? clamp((targetAltitudeFt - altitudeFt) * 0.12, -1800, 1800) : targetVsFpm;
+          if (resolvedAltitudeMode !== 'OFF') {
+            const holdGain = resolvedAltitudeMode === 'CAPTURE' ? 0.08 : 0.12;
+            desiredVsFpm = clamp(altitudeErrorFt * holdGain, -2200, 2200);
+          } else if (resolvedVerticalMode === 'VS' || resolvedVerticalMode === 'FPA') {
+            desiredVsFpm = resolvedVerticalMode === 'FPA' ? clamp(targetVsFpm * 0.85, -2600, 2600) : clamp(targetVsFpm, -3000, 3000);
+          }
 
-          verticalSpeedFpm += (desiredVs - verticalSpeedFpm) * 0.25;
+          const climbCapability = perf.climbCapabilityFpm;
+          const maxUpFpm = clamp(Math.max(250, climbCapability), 250, 3200);
+          const maxDownFpm = clamp(Math.min(-250, climbCapability - 200), -3200, -250);
+          const boundedDesiredVs = clamp(desiredVsFpm, maxDownFpm, maxUpFpm);
+          verticalSpeedFpm += (boundedDesiredVs - verticalSpeedFpm) * 0.21;
           altitudeFt += verticalSpeedFpm * (TICK_SECONDS / 60);
           altitudeFt = clamp(altitudeFt, 1000, AIRCRAFT_LIMITS.ceilingFt);
 
@@ -111,17 +135,11 @@ export function useSimulationLoop({
             const headingRateDps = clamp(rawDelta * 0.08, -3, 3);
             headingDeg = (headingDeg + headingRateDps * TICK_SECONDS + 360) % 360;
           }
-
-          airspeedKt += (attainableSpeedKt - airspeedKt) * 0.055;
         } else {
           verticalSpeedFpm += (0 - verticalSpeedFpm) * 0.14;
           altitudeFt += verticalSpeedFpm * (TICK_SECONDS / 60);
           altitudeFt = clamp(altitudeFt, 1000, AIRCRAFT_LIMITS.ceilingFt);
-          airspeedKt += (attainableSpeedKt - airspeedKt) * 0.08;
         }
-
-        // Residual acceleration from thrust margin keeps speed linked to engine state.
-        airspeedKt += (perf.thrustMarginLbf / 120000) * TICK_SECONDS;
 
         airspeedKt = clamp(airspeedKt, 180, AIRCRAFT_LIMITS.maxSpeedKt);
         distanceNm += airspeedKt * (TICK_SECONDS / 3600);
@@ -156,7 +174,7 @@ export function useSimulationLoop({
   }, [
     antiIce,
     autopilotOn,
-    altitudeHold,
+    afcsMode,
     boost,
     crossfeed,
     faultEnabled,

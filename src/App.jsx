@@ -106,7 +106,7 @@ export default function App() {
   const [acknowledgeToken, setAcknowledgeToken] = useState(0);
   const [activeTab, setActiveTab] = useState('engines');
   const [autopilotOn, setAutopilotOn] = useState(false);
-  const [altitudeHold, setAltitudeHold] = useState(true);
+  const [afcsMode, setAfcsMode] = useState({ altitude: 'HOLD', vertical: 'VS' });
   const [headingHold, setHeadingHold] = useState(true);
   const [navCoupled, setNavCoupled] = useState(false);
   const [speedHold, setSpeedHold] = useState(false);
@@ -132,7 +132,7 @@ export default function App() {
     crossfeed,
     transfer,
     autopilotOn,
-    altitudeHold,
+    afcsMode,
     targetAltitudeFt,
     targetVsFpm,
     headingHold,
@@ -407,8 +407,8 @@ export default function App() {
         <AutopilotTab
           autopilotOn={autopilotOn}
           setAutopilotOn={setAutopilotOn}
-          altitudeHold={altitudeHold}
-          setAltitudeHold={setAltitudeHold}
+          afcsMode={afcsMode}
+          setAfcsMode={setAfcsMode}
           headingHold={headingHold}
           setHeadingHold={setHeadingHold}
           navCoupled={navCoupled}

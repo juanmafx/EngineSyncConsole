@@ -16,13 +16,14 @@ export function useMetrics({ sim, throttles, antiIce, bleedAir, boost, transfer,
     const telemetry = calculateTelemetryResult({
       avgThrottlePct: avgThrottle,
       altitudeFt: sim.altitudeFt,
-      verticalSpeedFpm: 0,
+      verticalSpeedFpm: sim.verticalSpeedFpm,
       fuelRemainingLb: totalFuelRemaining,
       payloadLb,
       airspeedKt: sim.airspeedKt,
       boost,
       antiIce,
       faultEnabled,
+      availableThrustLbf: sim.thrustLbf.reduce((a, b) => a + b, 0),
     });
     const cruiseEstimateKt = telemetry.throttleCapabilityKt;
     const enduranceHours = totalFuelFlow > 0 ? totalFuelRemaining / totalFuelFlow : 0;

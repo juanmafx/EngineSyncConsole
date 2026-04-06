@@ -5,8 +5,8 @@ import { Module, StatusPill, ToggleButton } from '../../components/cockpit';
 export function AutopilotTab({
   autopilotOn,
   setAutopilotOn,
-  altitudeHold,
-  setAltitudeHold,
+  afcsMode,
+  setAfcsMode,
   headingHold,
   setHeadingHold,
   navCoupled,
@@ -24,6 +24,9 @@ export function AutopilotTab({
   metrics,
   toggleWithClick,
 }) {
+  const altitudeMode = afcsMode?.altitude ?? 'OFF';
+  const verticalMode = afcsMode?.vertical ?? 'NONE';
+  const altitudeManaged = altitudeMode !== 'OFF';
   const headingErrorDeg = ((targetHeadingDeg - metrics.headingDeg + 540) % 360) - 180;
   const altitudeErrorFt = targetAltitudeFt - metrics.altitudeFt;
   const airspeedErrorKt = targetAirspeedKt - metrics.airspeedKt;
@@ -31,7 +34,23 @@ export function AutopilotTab({
   const yawDamperOn = autopilotOn || headingHold || navCoupled;
   const flagTrim = Math.abs(metrics.verticalSpeedFpm) > 2200;
   const flagAirspeed = speedHold && Math.abs(airspeedErrorKt) > 40;
-  const flagAltitude = altitudeHold && Math.abs(altitudeErrorFt) > 2500;
+  const flagAltitude = altitudeManaged && Math.abs(altitudeErrorFt) > 2500;
+
+  const setAltitudeMode = (mode) => {
+    setAfcsMode((prev) => ({
+      ...prev,
+      altitude: mode,
+      vertical: mode === 'OFF' ? prev.vertical : 'NONE',
+    }));
+  };
+
+  const setVerticalMode = (mode) => {
+    setAfcsMode((prev) => ({
+      ...prev,
+      altitude: mode === 'NONE' ? prev.altitude : 'OFF',
+      vertical: mode,
+    }));
+  };
 
   return (
     <div className="gauge-grid">
@@ -42,7 +61,9 @@ export function AutopilotTab({
             onClick={() => toggleWithClick(setAutopilotOn)}
             label={autopilotOn ? 'AFCS Engaged' : 'AFCS Standby'}
           />
-          <ToggleButton active={altitudeHold} onClick={() => toggleWithClick(setAltitudeHold)} label="Altitude Hold" />
+          <ToggleButton active={altitudeManaged} onClick={() => setAltitudeMode(altitudeManaged ? 'OFF' : 'HOLD')} label="Altitude Hold" />
+          <ToggleButton active={verticalMode === 'VS'} onClick={() => setVerticalMode(verticalMode === 'VS' ? 'NONE' : 'VS')} label="VS Mode" />
+          <ToggleButton active={verticalMode === 'FPA'} onClick={() => setVerticalMode(verticalMode === 'FPA' ? 'NONE' : 'FPA')} label="FPA Mode" />
           <ToggleButton active={headingHold} onClick={() => toggleWithClick(setHeadingHold)} label="Heading Hold" />
           <ToggleButton active={navCoupled} onClick={() => toggleWithClick(setNavCoupled)} label="Nav Coupled" />
           <ToggleButton active={speedHold} onClick={() => toggleWithClick(setSpeedHold)} label="Speed Hold" />
@@ -112,7 +133,7 @@ export function AutopilotTab({
 
         <div className="summary-row">
           <span>Control Interface</span>
-          <strong>Classic rotary/selectors and toggle logic (analog style)</strong>
+          <strong>AFCS mode hierarchy (ALT mode overrides vertical mode)</strong>
         </div>
       </Module>
 
@@ -147,7 +168,8 @@ export function AutopilotTab({
         </div>
         <div className="annunciator-grid">
           <StatusPill label="AFCS MASTER" on={autopilotOn} tone="ok" />
-          <StatusPill label="ALT HOLD" on={altitudeHold} tone="ok" />
+          <StatusPill label={`ALT ${altitudeMode}`} on={altitudeManaged} tone="ok" />
+          <StatusPill label={`VERT ${verticalMode}`} on={verticalMode !== 'NONE'} tone="ok" />
           <StatusPill label="HDG HOLD" on={headingHold} tone="ok" />
           <StatusPill label="NAV COUPLED" on={navCoupled} tone="ok" />
           <StatusPill label="SPD HOLD" on={speedHold} tone="ok" />
