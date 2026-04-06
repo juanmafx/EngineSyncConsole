@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AIRCRAFT_LIMITS, ENGINE_COUNT, TICK_SECONDS } from './constants';
-import { clamp, getTargets, initSimulation } from './flightModel';
+import { clamp, initSimulation, updateEngine } from './flightModel';
 import { calculateTelemetryResult } from '../telemetry/results';
 
 export function useSimulationLoop({
@@ -25,63 +25,35 @@ export function useSimulationLoop({
   useEffect(() => {
     const interval = setInterval(() => {
       setSim((prev) => {
-        const targets = getTargets({ throttles, targetEpr, antiIce, boost });
-        const faultedTargets = {
-          epr: [...targets.epr],
-          n1Pct: [...targets.n1Pct],
-          n2Pct: [...targets.n2Pct],
-          n1Rpm: [...targets.n1Rpm],
-          n2Rpm: [...targets.n2Rpm],
-          rpm: [...targets.rpm],
-          egt: [...targets.egt],
-          oilPressure: [...targets.oilPressure],
-          oilTemp: [...targets.oilTemp],
-          fuelFlow: [...targets.fuelFlow],
-          thrustLbf: [...targets.thrustLbf],
-        };
+        const avgThrottleNow = throttles.reduce((a, b) => a + b, 0) / ENGINE_COUNT;
+        const nextEngines = prev.engines.map((engine, i) =>
+          updateEngine(engine, TICK_SECONDS, {
+            throttle: throttles[i] / 100,
+            health: faultEnabled && i === faultEngine ? 0.86 : 1,
+            antiIce,
+            boost,
+            targetEpr,
+            engineIndex: i,
+            avgThrottle: avgThrottleNow,
+          }),
+        );
 
-        if (faultEnabled) {
-          faultedTargets.epr[faultEngine] -= 0.2;
-          faultedTargets.n1Pct[faultEngine] -= 7;
-          faultedTargets.n2Pct[faultEngine] -= 6;
-          faultedTargets.n1Rpm[faultEngine] -= 620;
-          faultedTargets.n2Rpm[faultEngine] -= 720;
-          faultedTargets.rpm[faultEngine] -= 720;
-          faultedTargets.egt[faultEngine] += 54;
-          faultedTargets.oilPressure[faultEngine] -= 9;
-          faultedTargets.oilTemp[faultEngine] += 9;
-          faultedTargets.fuelFlow[faultEngine] += 380;
-          faultedTargets.thrustLbf[faultEngine] *= 0.86;
-        }
-
-        const blend = (current, target, gain) => current + (target - current) * gain;
-
-        const gainFor = (baseGain, i) => {
-          if (!(faultEnabled && i === faultEngine)) {
-            return baseGain;
-          }
-
-          return Math.max(0.04, baseGain * 0.38);
-        };
-
-        const n1Pct = prev.n1Pct.map((v, i) => blend(v, faultedTargets.n1Pct[i], gainFor(0.08, i)));
-        const n2Pct = prev.n2Pct.map((v, i) => blend(v, faultedTargets.n2Pct[i], gainFor(0.09, i)));
-        const n1Rpm = prev.n1Rpm.map((v, i) => blend(v, faultedTargets.n1Rpm[i], gainFor(0.08, i)));
-        const n2Rpm = prev.n2Rpm.map((v, i) => blend(v, faultedTargets.n2Rpm[i], gainFor(0.09, i)));
-        const rpm = n2Rpm;
-        const epr = prev.epr.map((v, i) => blend(v, faultedTargets.epr[i], gainFor(0.075, i)));
-        const egt = prev.egt.map((v, i) => blend(v, faultedTargets.egt[i], gainFor(0.05, i)));
-        const oilPressure = prev.oilPressure.map((v, i) => blend(v, faultedTargets.oilPressure[i], gainFor(0.11, i)));
-        const oilTemp = prev.oilTemp.map((v, i) => blend(v, faultedTargets.oilTemp[i], gainFor(0.05, i)));
-        const fuelFlow = prev.fuelFlow.map((v, i) => blend(v, faultedTargets.fuelFlow[i], gainFor(0.09, i)));
-        const thrustLbf = prev.thrustLbf.map((v, i) => blend(v, faultedTargets.thrustLbf[i], gainFor(0.085, i)));
-
+        const n1Pct = nextEngines.map((engine) => engine.N1);
+        const n2Pct = nextEngines.map((engine) => engine.N2);
+        const n1Rpm = nextEngines.map((engine) => engine.n1Rpm);
+        const n2Rpm = nextEngines.map((engine) => engine.n2Rpm);
+        const rpm = nextEngines.map((engine) => engine.rpm);
+        const epr = nextEngines.map((engine) => engine.epr);
+        const egt = nextEngines.map((engine) => engine.EGT);
+        const oilPressure = nextEngines.map((engine) => engine.oilPressure);
+        const oilTemp = nextEngines.map((engine) => engine.oilTemp);
+        const fuelFlow = nextEngines.map((engine) => engine.fuelFlow);
+        const thrustLbf = nextEngines.map((engine) => engine.thrustLbf);
         const trendRates = egt.map((v, i) => (v - prev.egt[i]) / TICK_SECONDS);
 
         const nextTankQty = { ...prev.tankQty };
         const totalFuelFlow = fuelFlow.reduce((a, b) => a + b, 0);
         const consumedLb = (totalFuelFlow / 3600) * TICK_SECONDS;
-        const avgThrottleNow = throttles.reduce((a, b) => a + b, 0) / ENGINE_COUNT;
         const totalFuelRemainingNow = Object.values(prev.tankQty).reduce((a, b) => a + b, 0);
         let distanceNm = prev.distanceNm;
         let altitudeFt = prev.altitudeFt;
@@ -153,6 +125,7 @@ export function useSimulationLoop({
         distanceNm += airspeedKt * (TICK_SECONDS / 3600);
 
         return {
+          engines: nextEngines,
           epr,
           n1Pct,
           n2Pct,

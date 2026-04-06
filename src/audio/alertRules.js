@@ -29,7 +29,7 @@ export function evaluateAlertState(simState) {
     cautions.add('electrical_bus_low');
   }
 
-  if (simState.iceAlarmActive) {
+  if (simState.iceAlarmActive || simState.antiIce === false) {
     cautions.add('ice_alarm');
   }
 

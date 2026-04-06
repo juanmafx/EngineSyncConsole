@@ -87,6 +87,11 @@ export function useCockpitAudio({
       });
     }
 
+    // Keep ICE alarm repeating (with SoundManager cooldown) until anti-ice/defrost is turned on.
+    if (alertSnapshot.cautions.has('ice_alarm')) {
+      manager.triggerIceAlert();
+    }
+
     const loopingCautions = [...alertSnapshot.cautions].filter((key) => !NON_LOOPING_CAUTIONS.has(key));
     const effectivePriority = alertSnapshot.warnings.size > 0 ? 1 : loopingCautions.length > 0 ? 2 : 0;
     if (effectivePriority !== prev.priority) {
