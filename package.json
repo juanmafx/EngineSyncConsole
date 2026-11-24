@@ -2,7 +2,7 @@
   "name": "enginesyncconsole",
   "description": "Deterministic browser simulation console for a TF33-class eight-engine aircraft.",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "license": "MIT",
   "engines": {

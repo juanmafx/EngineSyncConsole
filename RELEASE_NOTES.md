@@ -1,20 +1,17 @@
-# EngineSyncConsole 1.0.0 Release Notes
+# EngineSyncConsole 1.0.1 Release Notes
 
-Status: prepared, not tagged or published.
+Released 2026-11-24.
 
-## Highlights
+This is a documentation-only patch release. There is no code behaviour change from 1.0.0.
 
-- **Deterministic core.** The simulation is now a pure, seedable step function that runs in the browser or from the command line.
-- **Correctness fixes.** The simulation no longer stalls during autothrottle activity, fuel mass is conserved, and engines stop producing thrust when the tanks are empty.
-- **Tested.** The project now has an automated suite with property-based and statistical tests. See `reports/tests/SUMMARY.md`.
-- **Current stack.** React 19, Vite 8 and Node.js 24, with no known npm advisories at the time of the audit.
-- **Hardened.** Production builds include a Content Security Policy, and CI runs with read-only permissions and pinned actions.
+## Changes
+
+- The changelog and release notes now record 1.0.0 as released on 2026-11-24.
+- The security audit no longer references a commit from the pre-modernization history, which was removed from every branch and tag by the 2026-11-24 history rewrite.
 
 ## Upgrade Notes
 
-- Use Node.js 24 (`nvm use`).
-- Source paths changed. See `docs/ARCHITECTURE.md`.
-- Individual runs differ because of the model fixes. The default uncommanded 600 second run shows no measurable change in mean final speed (344.6 kt before, 344.3 kt after, 200 runs each, standard deviation about 11 kt).
+No migration is needed from 1.0.0. Node.js 24 is still required (`nvm use`).
 
 ## Known Limitations
 

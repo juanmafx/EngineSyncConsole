@@ -13,7 +13,7 @@ EngineSyncConsole is a static single-page application. It has no backend, authen
 | Check | Method | Result |
 | --- | --- | --- |
 | Dependency advisories | `npm audit` on the full tree | 8 before (5 high, 2 moderate, 1 low), 0 after |
-| Secrets in the tree and history | `gitleaks` 8.30.1 with `--redact` across the 15 commits up to `7d5098a` and the working tree | No findings |
+| Secrets in the tree and history | `gitleaks` 8.30.1 with `--redact` across the 15 commits of the pre-modernization history and the working tree | No findings. On 2026-11-24 the published history was rewritten to keep only the 2026 modernization commits |
 | Lockfile integrity | All 230 packages resolve to `registry.npmjs.org` with integrity hashes | No exceptions |
 | CI action pins | `actions/checkout` v7.0.1 and `actions/setup-node` v7.1.0 tags compared with the pinned commit hashes | Match |
 | Dangerous sinks (`eval`, `new Function`, `innerHTML`, `dangerouslySetInnerHTML`, `document.write`) | Source search and ESLint rules | None |
