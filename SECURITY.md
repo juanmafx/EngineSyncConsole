@@ -9,7 +9,7 @@
 
 ## Reporting a Vulnerability
 
-Please report vulnerabilities privately through GitHub's **Report a vulnerability** option on the repository's Security tab. Do not open a public issue.
+Do not post vulnerability details in a public issue. Private vulnerability reporting is not currently enabled on this repository, so open a GitHub issue that only asks the maintainer for a private contact channel, and share the details there.
 
 Include the affected version, reproduction steps, and the expected impact. This is a personal project maintained on a best-effort basis, so no response time is guaranteed.
 

@@ -6,7 +6,7 @@ const CONTENT_SECURITY_POLICY = [
   "script-src 'self'",
   "style-src 'self'",
   "img-src 'self'",
-  "media-src 'self' data: blob:",
+  "media-src 'self' data:",
   "connect-src 'self'",
   "font-src 'self'",
   "base-uri 'none'",

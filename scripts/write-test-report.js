@@ -13,6 +13,7 @@ writeFileSync(junitPath, stripMachineDetails(readFileSync(junitPath, 'utf8')));
 writeFileSync(jsonPath, stripMachineDetails(readFileSync(jsonPath, 'utf8')));
 
 const results = JSON.parse(readFileSync(jsonPath, 'utf8'));
+const succeeded = results.success === true && results.numFailedTests === 0 && results.numFailedTestSuites === 0;
 const suiteRows = results.testResults
   .map((suite) => {
     const passed = suite.assertionResults.filter((test) => test.status === 'passed').length;
@@ -30,6 +31,8 @@ const summary = [
   `- Passed: ${results.numPassedTests}`,
   `- Failed: ${results.numFailedTests}`,
   `- Skipped: ${results.numPendingTests}`,
+  `- Failed suites: ${results.numFailedTestSuites}`,
+  `- Result: ${succeeded ? 'PASS' : 'FAIL'}`,
   '',
   '| Suite | Tests | Passed | Failed |',
   '| --- | ---: | ---: | ---: |',
@@ -38,4 +41,4 @@ const summary = [
 ].join('\n');
 
 writeFileSync(resolve(reportDirectory, 'SUMMARY.md'), summary);
-process.exitCode = results.numFailedTests === 0 ? 0 : 1;
+process.exitCode = succeeded ? 0 : 1;

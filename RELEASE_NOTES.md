@@ -14,7 +14,7 @@ Status: prepared, not tagged or published.
 
 - Use Node.js 24 (`nvm use`).
 - Source paths changed. See `docs/ARCHITECTURE.md`.
-- Flight behavior differs slightly because of the model fixes. The default uncommanded 600 second run now ends near 340 kt instead of near 350 kt.
+- Individual runs differ because of the model fixes. The default uncommanded 600 second run shows no measurable change in mean final speed (344.6 kt before, 344.3 kt after, 200 runs each, standard deviation about 11 kt).
 
 ## Known Limitations
 

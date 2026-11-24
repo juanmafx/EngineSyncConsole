@@ -29,14 +29,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - The simulation stalled while the autothrottle was slewing, because each throttle update restarted the tick timer.
 - Fuel burn could exceed the fuel remaining, and engines kept producing thrust with empty tanks.
-- Random noise accumulated into the N1 state as a random walk. Together with the discretization changes, this moves the default uncommanded 600 second run from about 350 kt to about 340 kt (mean of 20 unseeded baseline runs versus 8 seeded runs).
+- Random noise accumulated into the N1 state as a random walk. The default uncommanded 600 second run shows no measurable change in mean final speed: 344.6 kt before and 344.3 kt after, each over 200 runs with a standard deviation of about 11 kt.
 - The simulation updater was impure, which conflicted with React StrictMode.
 - Vertical speed could remain non-zero while pinned at an altitude limit.
 - Aircraft mass was floored at 220,000 lb, above the 185,000 lb empty weight.
+- `npm run test:report` could report success after a test suite failed to load, or reuse stale results.
+- `npm run simulate` accepted durations too short to run a tick and printed a stack trace on malformed arguments.
 
 ### Security
 
 - Resolved all 8 npm audit advisories present in the previous lockfile (5 high, 2 moderate, 1 low).
+- Removed the unused `blob:` source from the Content Security Policy.
 
 ### Removed
 

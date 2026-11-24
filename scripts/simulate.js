@@ -1,17 +1,24 @@
 import { parseArgs } from 'node:util';
+import { TICK_SECONDS } from '../src/domain/aircraft/constants.js';
 import { parseSeed } from '../src/domain/math/random.js';
 import { runScenario } from '../src/domain/simulation/scenario.js';
 
 const MAX_DURATION_SECONDS = 86400;
 
-const { values } = parseArgs({
-  options: {
-    seed: { type: 'string', default: '42' },
-    duration: { type: 'string', default: '600' },
-    autopilot: { type: 'boolean', default: false },
-    'target-speed': { type: 'string', default: '442' },
-  },
-});
+let values;
+try {
+  ({ values } = parseArgs({
+    options: {
+      seed: { type: 'string', default: '42' },
+      duration: { type: 'string', default: '600' },
+      autopilot: { type: 'boolean', default: false },
+      'target-speed': { type: 'string', default: '442' },
+    },
+  }));
+} catch (error) {
+  console.error(error.message);
+  process.exit(2);
+}
 
 const seed = parseSeed(values.seed);
 const durationSeconds = Number(values.duration);
@@ -21,8 +28,8 @@ if (seed === null) {
   console.error('--seed must be an integer between 0 and 4294967295');
   process.exit(2);
 }
-if (!Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > MAX_DURATION_SECONDS) {
-  console.error(`--duration must be between 0 and ${MAX_DURATION_SECONDS} seconds`);
+if (!Number.isFinite(durationSeconds) || durationSeconds < TICK_SECONDS || durationSeconds > MAX_DURATION_SECONDS) {
+  console.error(`--duration must be between ${TICK_SECONDS} and ${MAX_DURATION_SECONDS} seconds`);
   process.exit(2);
 }
 if (!Number.isFinite(targetAirspeedKt) || targetAirspeedKt < 180 || targetAirspeedKt > 565) {

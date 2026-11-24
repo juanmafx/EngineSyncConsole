@@ -44,7 +44,7 @@ throttles + controls
   -> next state
 ```
 
-The fixed tick is 0.5 s. The autothrottle runs at 10 Hz and slews throttle commands, so it only influences the aircraft through the engine model.
+The fixed tick is 0.5 s. The autothrottle uses a nominal 100 ms period and slews throttle commands, so it only influences the aircraft through the engine model. The headless runner applies exactly five updates per tick. In the browser the timer restarts when its inputs change, so the update count per tick can vary.
 
 ## Models
 
@@ -92,7 +92,7 @@ Above 11 km, $\delta = \delta_{11} \, e^{-g (h - h_{11}) / (R T_{11})}$.
 
 ### Kinematics
 
-Speed and altitude use explicit Euler integration, with acceleration limited to +/-4 kt/s. Vertical speed follows its command through a first-order lag. In altitude-managed modes the command is proportional to altitude error: the gain is 0.12 fpm/ft outside the 350 ft capture band and 0.08 fpm/ft inside it, which gives a capture time constant of 12.5 minutes. Climb commands are bounded by excess specific power:
+Speed uses explicit Euler integration, with acceleration limited to +/-4 kt/s. Vertical speed follows its command through a first-order lag, and altitude integrates the updated vertical speed (semi-implicit Euler). In altitude-managed modes the command is proportional to altitude error: the gain is 0.12 fpm/ft outside the 350 ft capture band and 0.08 fpm/ft inside it, which gives a capture time constant of 12.5 minutes. Climb commands are bounded by excess specific power:
 
 $$\dot h_{max} \propto \frac{(T - D)\,V}{W}$$
 
@@ -130,6 +130,13 @@ erDiagram
 - Engine thrust does not lapse with altitude in the simulation loop. Thrust lapse only appears in the telemetry estimate when no measured thrust is supplied.
 - With empty tanks thrust drops to zero, but spool speeds and temperatures do not model a flameout.
 - The `Gear Unsafe` condition has no failure model. It can only appear for a single render when the lever moves down, before the transit state is set.
+- `Electrical Bus Low` cannot fire: the modeled bus voltages have minimums of 25.8 V and 25.2 V, above the 25 V limit.
+- Oil Temp High, EGT Trend Abnormal, Boost Pump Off and Fuel Transfer Off appear in the alert panel but play no audio.
+- The header caution count excludes `Gear Unsafe` and `Electrical Bus Low`, which the alert panel can list.
+- Nav Coupled has no navigation model. It steers to the same target heading as Heading Hold.
+- The ATT HOLD, SAS and yaw damper indicators are status displays with no effect on the flight model.
+- Telemetry samples are appended whenever metrics or throttles change, so the 360-sample window does not cover a fixed time span.
+- Exact replay is only guaranteed by the headless runner, because browser control timing depends on timers and user input.
 - Ferry and combat range projections are heuristic multipliers.
 - The speed and altitude integrators are first order.
 - `AIRCRAFT_MASS.maxFuelLb` (312,197 lb) differs slightly from the sum of the tank capacities (312,200 lb). The simulation uses the tank sum.

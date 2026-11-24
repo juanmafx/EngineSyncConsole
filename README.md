@@ -18,7 +18,7 @@ Multi-engine systems are hard to reason about from static tables because the int
 | --- | --- |
 | Engines | Eight independent throttles, N1/N2 first-order spool lag, EPR, RPM, EGT, oil pressure and temperature, EGT trend, single-engine fault injection |
 | Fuel | Four tanks, two burn schedules, crossfeed equalization, boost and transfer controls, payload selection, endurance and range estimates |
-| Autoflight | AFCS master, altitude hold, heading hold, nav coupled, speed hold, autothrottle with a 5 second manual override |
+| Autoflight | AFCS master, altitude hold, heading hold and nav coupled modes (both steer to the target heading), speed hold, autothrottle with a 5 second manual override |
 | Alerts | Master warning and caution, per-engine annunciators, prioritized and acknowledgeable audio |
 | Telemetry | Live trend charts over a rolling 360-sample window |
 | Headless | A command-line scenario runner that emits reproducible JSON statistics |
@@ -73,13 +73,13 @@ Open the URL Vite prints. Browsers block audio until the first interaction, so c
 
 ### Reproducible Runs
 
-Append a seed to replay the same stochastic engine behavior in the browser, for the same sequence of control inputs:
+Append a seed to fix the engine noise sequence in the browser:
 
 ```text
 http://localhost:5173/?seed=42
 ```
 
-Run a scenario without a browser:
+Browser runs depend on timers and on when controls are moved, so exact replay is only guaranteed by the headless runner:
 
 ```bash
 npm run simulate -- --seed 42 --duration 600
@@ -94,7 +94,7 @@ The output is JSON containing the final state and summary statistics. The same s
 | --- | --- | --- |
 | `seed` | URL query string | Integer from 0 to 4294967295. Invalid or missing values use a random seed |
 | `--seed` | `npm run simulate` | Integer from 0 to 4294967295, default 42 |
-| `--duration` | `npm run simulate` | Greater than 0, up to 86400 seconds, default 600 |
+| `--duration` | `npm run simulate` | 0.5 to 86400 seconds, rounded to the 0.5 second tick, default 600 |
 | `--autopilot` | `npm run simulate` | Enables AFCS and speed hold |
 | `--target-speed` | `npm run simulate` | 180 to 565 knots, default 442 |
 | Aircraft model | `src/domain/aircraft/constants.js` | Engine count, tank capacity, limits, masses |
@@ -119,6 +119,8 @@ The application uses no environment variables or secrets.
 | Gear Unsafe | Caution | Lever down, not locked, not in transit |
 | Boost Pump Off, Fuel Transfer Off | Caution | The respective system is off |
 
+Oil Temp High, EGT Trend Abnormal, Boost Pump Off and Fuel Transfer Off are visual only and play no audio. Electrical Bus Low cannot currently fire, because the modeled bus voltages never drop below 25.2 V. Gear Unsafe has no failure model. See the known limitations in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Database
 
 The console does **not** use a database, and the schema is **optional**. [`db/schema.sql`](db/schema.sql) is a small SQLite schema for anyone who wants to store headless run results for analysis:
@@ -136,7 +138,7 @@ npm run lint
 npm run build
 ```
 
-The suite covers property-based invariants (fuel mass conservation, envelope bounds, heading convergence), statistical checks of the PRNG (chi-square uniformity, moments, serial correlation), International Standard Atmosphere reference values, seeded reproducibility, schema constraints, and UI behavior.
+The suite covers property-based invariants (fuel mass conservation, envelope bounds, heading convergence), statistical checks of the PRNG (chi-square uniformity, moments, serial correlation), International Standard Atmosphere reference values, seeded reproducibility, schema constraints, command-line validation, test report integrity, and UI behavior.
 
 The latest committed run is in [reports/tests/SUMMARY.md](reports/tests/SUMMARY.md).
 
@@ -146,7 +148,7 @@ The application has no accounts, forms, network API, persistence, or secrets. Pr
 
 ## Screenshots
 
-These screenshots were captured before the 2026 modernization. The layout is unchanged.
+These screenshots were captured before the 2026 modernization and have not been recaptured.
 
 | Engines | Fuel Emulation |
 | --- | --- |

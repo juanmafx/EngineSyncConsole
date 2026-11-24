@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:report": "vitest run --reporter=default --reporter=junit --reporter=json --outputFile.junit=reports/tests/junit.xml --outputFile.json=reports/tests/results.json; node scripts/write-test-report.js",
+    "test:report": "rm -f reports/tests/junit.xml reports/tests/results.json; vitest run --reporter=default --reporter=junit --reporter=json --outputFile.junit=reports/tests/junit.xml --outputFile.json=reports/tests/results.json; status=$?; node scripts/write-test-report.js && exit $status",
     "simulate": "node scripts/simulate.js",
     "audit:prod": "npm audit --omit=dev"
   },

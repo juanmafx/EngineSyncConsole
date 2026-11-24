@@ -13,7 +13,9 @@ EngineSyncConsole is a static single-page application. It has no backend, authen
 | Check | Method | Result |
 | --- | --- | --- |
 | Dependency advisories | `npm audit` on the full tree | 8 before (5 high, 2 moderate, 1 low), 0 after |
-| Secrets in the tree and history | `gitleaks` 8.30.1 across 14 commits and the working tree | No findings |
+| Secrets in the tree and history | `gitleaks` 8.30.1 with `--redact` across the 15 commits up to `7d5098a` and the working tree | No findings |
+| Lockfile integrity | All 230 packages resolve to `registry.npmjs.org` with integrity hashes | No exceptions |
+| CI action pins | `actions/checkout` v7.0.1 and `actions/setup-node` v7.1.0 tags compared with the pinned commit hashes | Match |
 | Dangerous sinks (`eval`, `new Function`, `innerHTML`, `dangerouslySetInnerHTML`, `document.write`) | Source search and ESLint rules | None |
 | Browser storage and network calls in source | Source search | None |
 | Tracked dependencies and build output | `git ls-files` | None |
@@ -31,6 +33,9 @@ EngineSyncConsole is a static single-page application. It has no backend, authen
 | SA-04 | Low | Verbose audio event logging in production | Fixed: limited to development builds |
 | SA-05 | Low | No CI supply-chain controls | Fixed: read-only token, actions pinned to commit hashes, exact dependency versions |
 | SA-06 | Low | Clickjacking protection requires a response header that a static bundle cannot set | Open: depends on the hosting platform, see `SECURITY.md` |
+| SA-07 | Low | Content Security Policy allowed `blob:` media, which the application does not use | Fixed: removed |
+| SA-08 | Low | Private vulnerability reporting is disabled on the repository | Open: requires a repository setting, see `SECURITY.md` |
+| SA-09 | Low | The test report could show a pass after a suite failed to load, or reuse stale results | Fixed: the report and exit code now fail, with regression tests |
 
 ## Not Applicable
 
