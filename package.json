@@ -1,0 +1,39 @@
+{
+  "name": "enginesyncconsole",
+  "description": "Deterministic browser simulation console for a TF33-class eight-engine aircraft.",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:report": "vitest run --reporter=default --reporter=junit --reporter=json --outputFile.junit=reports/tests/junit.xml --outputFile.json=reports/tests/results.json; node scripts/write-test-report.js",
+    "simulate": "node scripts/simulate.js",
+    "audit:prod": "npm audit --omit=dev"
+  },
+  "dependencies": {
+    "howler": "2.2.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@testing-library/react": "16.3.3",
+    "@vitejs/plugin-react": "6.3.0",
+    "eslint": "10.15.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "fast-check": "4.11.0",
+    "globals": "17.14.0",
+    "jsdom": "31.0.1",
+    "vite": "8.3.8",
+    "vitest": "5.1.1"
+  }
+}

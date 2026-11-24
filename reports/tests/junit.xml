@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="97" failures="0" errors="0" time="1.598147747">
+    <testsuite name="tests/db/schema.test.js" timestamp="2026-11-24T01:42:46.973Z" hostname="redacted" tests="6" failures="0" errors="0" skipped="0" time="0.030881936">
+        <testcase classname="tests/db/schema.test.js" name="db/schema.sql &gt; creates every table" time="0.00948761">
+        </testcase>
+        <testcase classname="tests/db/schema.test.js" name="db/schema.sql &gt; is idempotent" time="0.003752321">
+        </testcase>
+        <testcase classname="tests/db/schema.test.js" name="db/schema.sql &gt; rejects an out-of-range seed" time="0.002471674">
+        </testcase>
+        <testcase classname="tests/db/schema.test.js" name="db/schema.sql &gt; rejects malformed controls JSON" time="0.001988562">
+        </testcase>
+        <testcase classname="tests/db/schema.test.js" name="db/schema.sql &gt; enforces engine numbering and sample references" time="0.003046589">
+        </testcase>
+        <testcase classname="tests/db/schema.test.js" name="db/schema.sql &gt; cascades deletes from a run" time="0.002855789">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/domain/alerts.test.js" timestamp="2026-11-24T01:42:46.976Z" hostname="redacted" tests="18" failures="0" errors="0" skipped="0" time="0.01736427">
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; is quiet in nominal conditions" time="0.004619451">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; applies the EGT caution boundary at 700" time="0.00059944">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; applies the EGT caution boundary at 700.1" time="0.000453574">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; applies the EGT warning boundary at 760" time="0.000553072">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; applies the EGT warning boundary at 760.1" time="0.000398325">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; gives warnings priority over cautions" time="0.000431513">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; raises oil_pressure_low" time="0.000341285">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; raises engine_degraded" time="0.00029661">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; raises fuel_imbalance" time="0.000424212">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; raises throttle_asymmetry" time="0.00058622">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; raises electrical_bus_low" time="0.000278959">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; raises ice_alarm" time="0.000168936">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; raises gear_unsafe" time="0.00016358">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="evaluateAlertState &gt; suppresses gear unsafe during transit" time="0.000207426">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="alert transitions &gt; reports raised and cleared keys" time="0.001439457">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="buildActiveAlertList &gt; is empty in nominal conditions" time="0.000807316">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="buildActiveAlertList &gt; names the affected engine" time="0.000639512">
+        </testcase>
+        <testcase classname="tests/domain/alerts.test.js" name="buildActiveAlertList &gt; produces unique identifiers when everything is active" time="0.000652685">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/domain/engine.test.js" timestamp="2026-11-24T01:42:46.982Z" hostname="redacted" tests="6" failures="0" errors="0" skipped="0" time="0.332419291">
+        <testcase classname="tests/domain/engine.test.js" name="engine outputs &gt; produces more thrust and fuel flow as N1 rises" time="0.013205702">
+        </testcase>
+        <testcase classname="tests/domain/engine.test.js" name="engine outputs &gt; reduces thrust when health degrades" time="0.001453611">
+        </testcase>
+        <testcase classname="tests/domain/engine.test.js" name="engine outputs &gt; caps thrust at the rated value" time="0.000695977">
+        </testcase>
+        <testcase classname="tests/domain/engine.test.js" name="engine dynamics &gt; keeps every output inside its physical envelope" time="0.301682006">
+        </testcase>
+        <testcase classname="tests/domain/engine.test.js" name="engine dynamics &gt; spools up slower than the command and settles near the target" time="0.000955835">
+        </testcase>
+        <testcase classname="tests/domain/engine.test.js" name="engine dynamics &gt; keeps sensor noise from accumulating into the spool state" time="0.006765139">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/domain/flight.test.js" timestamp="2026-11-24T01:42:46.983Z" hostname="redacted" tests="10" failures="0" errors="0" skipped="0" time="0.118835689">
+        <testcase classname="tests/domain/flight.test.js" name="aircraft kinematics &gt; stays inside the flight envelope for arbitrary inputs" time="0.05082504">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="aircraft kinematics &gt; accelerates with excess thrust and decelerates with a deficit" time="0.000982043">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="aircraft kinematics &gt; adds drag when anti-ice is on" time="0.000642974">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="aircraft kinematics &gt; captures a target altitude with sufficient thrust" time="0.026575534">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="aircraft kinematics &gt; zeroes vertical speed when pinned at an envelope limit" time="0.000948094">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="heading control &gt; always reduces heading error and stays normalized" time="0.011467688">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="heading control &gt; turns across north by the short way" time="0.000639762">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="heading control &gt; converges to the target" time="0.002637972">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="autothrottle &gt; bounds throttle command and integrator" time="0.015863641">
+        </testcase>
+        <testcase classname="tests/domain/flight.test.js" name="autothrottle &gt; limits slew per update" time="0.003048679">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/domain/fuel.test.js" timestamp="2026-11-24T01:42:46.985Z" hostname="redacted" tests="7" failures="0" errors="0" skipped="0" time="0.073504921">
+        <testcase classname="tests/domain/fuel.test.js" name="drawFuel &gt; conserves mass and never drives a tank negative" time="0.033473758">
+        </testcase>
+        <testcase classname="tests/domain/fuel.test.js" name="drawFuel &gt; delivers the full request while fuel is available" time="0.017759021">
+        </testcase>
+        <testcase classname="tests/domain/fuel.test.js" name="drawFuel &gt; applies the transfer schedule" time="0.000572367">
+        </testcase>
+        <testcase classname="tests/domain/fuel.test.js" name="drawFuel &gt; reroutes demand when a scheduled tank is empty" time="0.000511922">
+        </testcase>
+        <testcase classname="tests/domain/fuel.test.js" name="drawFuel &gt; reports a shortfall when fuel runs out" time="0.000530317">
+        </testcase>
+        <testcase classname="tests/domain/fuel.test.js" name="equalizeWingTanks &gt; conserves mass and shrinks imbalance without crossing over" time="0.012377878">
+        </testcase>
+        <testcase classname="tests/domain/fuel.test.js" name="equalizeWingTanks &gt; respects the crossfeed rate limit" time="0.000602782">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/domain/math.test.js" timestamp="2026-11-24T01:42:46.987Z" hostname="redacted" tests="30" failures="0" errors="0" skipped="0" time="0.279473514">
+        <testcase classname="tests/domain/math.test.js" name="random stream &gt; reproduces the same sequence for the same seed" time="0.049219196">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="random stream &gt; resumes exactly from a captured state" time="0.001358934">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="random stream &gt; stays inside the unit interval" time="0.012075523">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="random stream &gt; passes a chi-square uniformity test for seed 1" time="0.033839626">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="random stream &gt; passes a chi-square uniformity test for seed 42" time="0.033423059">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="random stream &gt; passes a chi-square uniformity test for seed 2026" time="0.02971848">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="random stream &gt; has mean, variance and serial correlation of a uniform source" time="0.080996334">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; accepts every unsigned 32-bit integer" time="0.001614681">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects " time="0.000538828">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects -1" time="0.000462043">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects 1.5" time="0.000280305">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects abc" time="0.000253177">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects 4294967296" time="0.000168626">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects 1e5" time="0.000172339">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects &lt;script&gt;" time="0.000174269">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects null" time="0.000149254">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="parseSeed &gt; rejects undefined" time="0.000151776">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="first-order lag &gt; is invariant to step subdivision" time="0.010194302">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="first-order lag &gt; never overshoots the target" time="0.010910305">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="angles &gt; normalizes into [0, 360)" time="0.001817061">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="angles &gt; takes the shortest arc" time="0.001588855">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="statistics &gt; matches a hand-computed sample" time="0.0005106">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="statistics &gt; handles an empty sample" time="0.000246806">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="statistics &gt; clamps inside bounds" time="0.001352889">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="International Standard Atmosphere &gt; matches published ratios at 0 ft" time="0.000514279">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="International Standard Atmosphere &gt; matches published ratios at 16404.199475065616 ft" time="0.000246619">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="International Standard Atmosphere &gt; matches published ratios at 36089.238845144355 ft" time="0.000280103">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="International Standard Atmosphere &gt; matches published ratios at 49212.59842519685 ft" time="0.000240569">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="International Standard Atmosphere &gt; is strictly decreasing in density up to the modeled ceiling" time="0.001101135">
+        </testcase>
+        <testcase classname="tests/domain/math.test.js" name="International Standard Atmosphere &gt; is continuous across the tropopause" time="0.000249495">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/domain/simulation.test.js" timestamp="2026-11-24T01:42:46.994Z" hostname="redacted" tests="15" failures="0" errors="0" skipped="0" time="0.390863158">
+        <testcase classname="tests/domain/simulation.test.js" name="reproducibility &gt; produces identical runs for the same seed" time="0.083410305">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="reproducibility &gt; produces different traces for different seeds" time="0.016061174">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="reproducibility &gt; is a pure step that does not mutate its input" time="0.001883234">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="conservation &gt; balances fuel used against tank depletion for arbitrary configurations" time="0.104782603">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="conservation &gt; removes thrust and fuel flow once all tanks are empty" time="0.001218987">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="conservation &gt; never burns more fuel than remains near exhaustion" time="0.001749094">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="closed-loop behavior &gt; holds the selected speed with the autothrottle" time="0.1582558">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="closed-loop behavior &gt; distance equals the integral of airspeed" time="0.000615247">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="derived metrics &gt; computes gross weight from its parts" time="0.003844094">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="derived metrics &gt; clamps payload to the structural limit" time="0.000912643">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="derived metrics &gt; computes endurance as fuel over flow" time="0.000408139">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="derived metrics &gt; counts the ice caution when anti-ice is off" time="0.000550061">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="telemetry performance &gt; keeps speed capability ordered and bounded" time="0.01122912">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="telemetry performance &gt; loses modeled thrust with altitude" time="0.000345538">
+        </testcase>
+        <testcase classname="tests/domain/simulation.test.js" name="telemetry performance &gt; reduces modeled thrust with an engine fault" time="0.000327422">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/ui/app.test.jsx" timestamp="2026-11-24T01:42:46.998Z" hostname="redacted" tests="5" failures="0" errors="0" skipped="0" time="0.354804968">
+        <testcase classname="tests/ui/app.test.jsx" name="App &gt; renders the console and every tab" time="0.328292037">
+        </testcase>
+        <testcase classname="tests/ui/app.test.jsx" name="App &gt; advances the simulation on its tick" time="0.009409658">
+        </testcase>
+        <testcase classname="tests/ui/app.test.jsx" name="App &gt; keeps ticking while throttles change faster than the tick period" time="0.013565449">
+        </testcase>
+        <testcase classname="tests/ui/app.test.jsx" name="resolveSeed &gt; uses a valid seed from the query string" time="0.000467956">
+        </testcase>
+        <testcase classname="tests/ui/app.test.jsx" name="resolveSeed &gt; ignores an invalid seed and falls back to a random one" time="0.00044392">
+        </testcase>
+    </testsuite>
+</testsuites>
