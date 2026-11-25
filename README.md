@@ -2,6 +2,8 @@
 
 A browser-based systems console that simulates a TF33-class eight-engine aircraft: spool dynamics, fuel routing, autoflight, alerts, and cockpit audio, driven by a deterministic, seedable simulation core.
 
+Built with React 19 and Vite. The simulation core in `src/domain` is plain JavaScript with no React dependency, and the project is tested with Vitest.
+
 > **Project history:** originally created in 2026, modernized in 2026.
 
 > **Not for operational use.** This is an educational model for visualization and systems logic. It is not certified, not validated against flight data, and must not be used for training credit, flight planning, or engineering decisions.
